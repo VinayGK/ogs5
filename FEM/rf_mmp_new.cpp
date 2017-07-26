@@ -62,6 +62,7 @@ using FiniteElement::CElement;
 using FiniteElement::ElementValue;
 using FiniteElement::CFiniteElementStd;
 using FiniteElement::ElementValue_DM;
+using Math_Group::Matrix;
 
 /**************************************************************************
    FEMLib-Method: CMediumProperties
@@ -146,6 +147,7 @@ CMediumProperties::CMediumProperties() : geo_dimension(0), _mesh(NULL), _geo_typ
 	storage_effstress_model = 0;
 	permeability_effstress_model = 0;
 	evaporation = -1;
+	thermal_conductivity_averaging_law = "AAA";//VK: 15.03.2017
 }
 
 /**************************************************************************
@@ -1943,6 +1945,48 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 			in >> ElementVolumeMultiplyer;
 			std::cout << " Setting ElementVolumeMultiplyer to " << ElementVolumeMultiplyer
 			          << "- times the grid value \n";
+			in.clear();
+			continue;
+		}
+		//------------------------------------------------------------------------
+		// Averaging laws for effective thermal conductivity
+		//------------------------------------------------------------------------
+		if (line_string.find("$THERMAL_AVERAGING") != string::npos) //VK
+		{
+			in.str(GetLineFromFile1(mmp_file));
+			std::string i, j, k;
+			in >> i;
+			thermal_conductivity_averaging_law[0] = i[0];
+			thermal_conductivity_averaging_law[1] = i[0];
+			thermal_conductivity_averaging_law[2] = i[0];
+			switch (geo_dimension) {
+			case 3:
+				in >> j >> k;
+				thermal_conductivity_averaging_law[1] = j[0];
+				thermal_conductivity_averaging_law[2] = k[0];
+				break;
+			case 2:
+				in >> j;
+				thermal_conductivity_averaging_law[1] = j[0];
+				break;
+			}
+
+			for (int i = 0; i < thermal_conductivity_averaging_law.size(); i++)
+				switch (thermal_conductivity_averaging_law[i])
+				{
+				case 'A': //arithmetic averaging
+					break;
+				case 'G': //geometric averaging
+					break;
+				case 'H': //harmonic averaging
+					break;
+				default:
+					thermal_conductivity_averaging_law[i] = 'A';
+					std::cout << "Error in CMediumProperties::Read: no valid thermal conductivity averaging defined for " << i << '\n';
+					break;
+				}
+			in.clear();
+			continue;
 		}
 	}
 	return position;
@@ -2663,6 +2707,17 @@ double* CMediumProperties::HeatConductivityTensor(int number)
 	// long group = Fem_Ele_Std->GetMeshElement()->GetPatchIndex();
 	m_mfp = Fem_Ele_Std->FluidProp; // WW
 
+	// VK, for thermal conductivity averaging
+	double prin_heat_cond_vector[9] = { 0. }, prin_dir[9] = { 0. }, tmp_conductivity_vector[9] = { 0. };
+	inv_matrix = new Matrix(6, 6);
+	prin_heat_tensor_matrix = new Matrix(6, 6);
+	result_heat_tensor_matrix = new Matrix(6, 6);
+	prin_dir_matrix = new Matrix(6, 6);
+	*inv_matrix = (0.0);
+	*prin_heat_tensor_matrix = (0.0);
+	*result_heat_tensor_matrix = (0.0);
+	*prin_dir_matrix = (0.0);
+
 	// if (Fem_Ele_Std->PcsType==S)     // Multi-phase WW
 	//{
 	///*m_mfp = mfp_vector[0];
@@ -2734,11 +2789,107 @@ double* CMediumProperties::HeatConductivityTensor(int number)
 	m_msp = msp_vector[group];
 	m_msp->HeatConductivityTensor(dimen, heat_conductivity_tensor, group); // MX
 
-	for (i = 0; i < dimen * dimen; i++)
+	/*for (i = 0; i < dimen * dimen; i++)
 		heat_conductivity_tensor[i] *= (1.0 - porosity);
 	for (i = 0; i < dimen; i++)
-		heat_conductivity_tensor[i * dimen + i] += porosity * heat_conductivity_fluids;
+		heat_conductivity_tensor[i * dimen + i] += porosity * heat_conductivity_fluids;*/
+		//VK: change tensor component sequence to pass to msp->CalPrinStrDir()
+	if (dimen == 1)//VK 01.03.2017
+		tmp_conductivity_vector[0] = heat_conductivity_tensor[0];
+	else if (dimen == 2)
+	{
+		tmp_conductivity_vector[0] = heat_conductivity_tensor[0];
+		tmp_conductivity_vector[1] = heat_conductivity_tensor[3];
+		tmp_conductivity_vector[3] = heat_conductivity_tensor[1];
+		tmp_conductivity_vector[5] = heat_conductivity_tensor[2];
+	}
+	else
+	{
+		tmp_conductivity_vector[0] = heat_conductivity_tensor[0];
+		tmp_conductivity_vector[1] = heat_conductivity_tensor[4];
+		tmp_conductivity_vector[2] = heat_conductivity_tensor[8];
+		tmp_conductivity_vector[3] = heat_conductivity_tensor[1];
+		tmp_conductivity_vector[4] = heat_conductivity_tensor[2];
+		tmp_conductivity_vector[5] = heat_conductivity_tensor[3];
+		tmp_conductivity_vector[6] = heat_conductivity_tensor[5];
+		tmp_conductivity_vector[7] = heat_conductivity_tensor[6];
+		tmp_conductivity_vector[8] = heat_conductivity_tensor[7];
+	}
+	//VK: calc eigen value and eigen vectors
+	m_msp->CalPrinStrDir(tmp_conductivity_vector, prin_heat_cond_vector, prin_dir, dimen);
+	//check for negative eigen values
+	for (int i = 0; i < dimen; i++)
+		if (prin_heat_cond_vector[i] <= 0)
+		{
+			std::cout << "! Error in CMediumProperties::HeatConductivityTensor. Eigen value " << i << " is negative!"
+				<< "\n";
+			exit(1);
+		}
+	//perform different averaging for each direction
+	for (int i = 0; i < dimen; i++)
+		switch (thermal_conductivity_averaging_law[i])
+		{
+		case 'A': // VK: Arithmetic Averaging
+			(*prin_heat_tensor_matrix)(i, i) = (1.0 - porosity)*prin_heat_cond_vector[i];// [i + 3 * i];
+			(*prin_heat_tensor_matrix)(i, i) += porosity * heat_conductivity_fluids;
+			break;
+		case 'G': // VK: Geometric Averaging
+			(*prin_heat_tensor_matrix)(i, i) = pow(prin_heat_cond_vector[i], (1.0 - porosity));
+			(*prin_heat_tensor_matrix)(i, i) *= pow(heat_conductivity_fluids, porosity);
+			break;
+		case 'H': // VK: Harmonic Averaging
+			(*prin_heat_tensor_matrix)(i, i) = (1.0 - porosity) / prin_heat_cond_vector[i];
+			(*prin_heat_tensor_matrix)(i, i) += porosity / heat_conductivity_fluids;
+			(*prin_heat_tensor_matrix)(i, i) = pow((*prin_heat_tensor_matrix)(i, i), -1);
+			break;
+		default: //VK: default: arithmetic averaging after printing warning message
+			cout << "Warning! CMediumProperties::HeatConductivityTensor: unknown thermal conductivity."
+				<< " averaging model: " << thermal_conductivity_averaging_law[i] << ". Using arithmetic mean" << "\n";
+			(*prin_heat_tensor_matrix)(i, i) = (1.0 - porosity)*prin_heat_cond_vector[i + 3 * i];
+			(*prin_heat_tensor_matrix)(i, i) += porosity * heat_conductivity_fluids;
+			break;
+		}
+	//VK: convert eigen vector to tensor, build the transformation matrix
+	(*prin_dir_matrix)(0, 0) = prin_dir[0];
+	(*prin_dir_matrix)(1, 0) = prin_dir[1];
+	(*prin_dir_matrix)(2, 0) = prin_dir[2];
+	(*prin_dir_matrix)(0, 1) = prin_dir[3];
+	(*prin_dir_matrix)(1, 1) = prin_dir[4];
+	(*prin_dir_matrix)(2, 1) = prin_dir[5];
+	(*prin_dir_matrix)(0, 2) = prin_dir[6];
+	(*prin_dir_matrix)(1, 2) = prin_dir[7];
+	(*prin_dir_matrix)(2, 2) = prin_dir[8];
 
+	//get transpose of transformation matrix
+	prin_dir_matrix->GetTranspose(*inv_matrix);
+
+	//multiply Q*M*Q^T and store in result_heat_tensor_matrix
+	//VK: changed 16.07.2017
+	inv_matrix->multi(*prin_heat_tensor_matrix, *prin_dir_matrix, *result_heat_tensor_matrix);
+
+	//overwrite heat_conductivity_tensor with new values post averaging
+	//VK 01.03.2017
+	if (dimen == 1)
+		heat_conductivity_tensor[0] = (*result_heat_tensor_matrix)(0, 0);
+	else if (dimen == 2)
+	{
+		heat_conductivity_tensor[0] = (*result_heat_tensor_matrix)(0, 0);
+		heat_conductivity_tensor[1] = (*result_heat_tensor_matrix)(0, 1);
+		heat_conductivity_tensor[2] = (*result_heat_tensor_matrix)(1, 0);
+		heat_conductivity_tensor[3] = (*result_heat_tensor_matrix)(1, 1);
+	}
+	else
+	{
+		heat_conductivity_tensor[0] = (*result_heat_tensor_matrix)(0, 0);
+		heat_conductivity_tensor[1] = (*result_heat_tensor_matrix)(0, 1);
+		heat_conductivity_tensor[2] = (*result_heat_tensor_matrix)(0, 2);
+		heat_conductivity_tensor[3] = (*result_heat_tensor_matrix)(1, 0);
+		heat_conductivity_tensor[4] = (*result_heat_tensor_matrix)(1, 1);
+		heat_conductivity_tensor[5] = (*result_heat_tensor_matrix)(1, 2);
+		heat_conductivity_tensor[6] = (*result_heat_tensor_matrix)(2, 0);
+		heat_conductivity_tensor[7] = (*result_heat_tensor_matrix)(2, 1);
+		heat_conductivity_tensor[8] = (*result_heat_tensor_matrix)(2, 2);
+	}
 	if (evaporation == 647)
 	{
 		int GravityOn = 1;
