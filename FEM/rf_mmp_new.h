@@ -36,6 +36,10 @@ namespace FiniteElement
 class CFiniteElementStd;
 }
 using FiniteElement::CFiniteElementStd;
+namespace Math_Group //VK 29.11.2016 added
+{
+	class Matrix;
+}
 class CMediumProperties
 {
 public:
@@ -311,6 +315,15 @@ public:
 	double graindiameter;
 	double hydraulicrad;
 	double betaexpo;
+
+	//VK: 21.07.2017 Introducing new variable for thermal conductivity averaging
+	std::string thermal_conductivity_averaging_law;
+
+	//VK 29.11.2016
+	Math_Group::Matrix* inv_matrix;
+	Math_Group::Matrix* prin_dir_matrix;
+	Math_Group::Matrix* prin_heat_tensor_matrix;
+	Math_Group::Matrix* result_heat_tensor_matrix;
 };
 
 class CMediumPropertiesGroup // YD
