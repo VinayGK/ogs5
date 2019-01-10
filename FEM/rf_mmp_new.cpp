@@ -522,6 +522,9 @@ std::ios::pos_type CMediumProperties::Read(std::ifstream* mmp_file)
 					in >> porosity_model_values[0]; // set a default value for BRNS calculation
 					break;
 #endif
+				case 17:
+					in >> porosity_model_values[0]; // VK 07/2018
+					break;
 				default:
 					std::cerr << "Error in MMPRead: no valid porosity model"
 					          << "\n";
@@ -2059,6 +2062,10 @@ void CMediumProperties::Write(std::fstream* mmp_file)
 				break;
 			case 11: // MB ToDo
 				*mmp_file << porosity_file << "\n"; // MB
+				break;
+			case 12: //VK:07/2018 Added to output porosity change due to volumetric strain
+				//@TODO should it be case 17?
+				*mmp_file << porosity_model_values[0] << "\n";
 				break;
 		}
 	}
@@ -3914,6 +3921,10 @@ double CMediumProperties::Porosity(long number, double theta)
 				}
 			break;
 #endif
+		case 17: // n = f(div(u)) VK: 07/2018
+			porosity = PorosityVolStrain2(number, porosity_model_values[0], assem);
+		break;
+		
 		default:
 			cout << "Unknown porosity model!"
 			     << "\n";
@@ -4061,6 +4072,9 @@ double CMediumProperties::Porosity(CElement* assem)
 			// KG44: TODO!!!!!!!!!!!!! check the above  ***************
 			break;
 #endif
+		case 17: // n = f(div(u)) VK: 07/2018
+			porosity = PorosityVolStrain2(number, porosity_model_values[0], assem_tmp);
+			break;
 
 		default:
 			DisplayMsgLn("Unknown porosity model!");
@@ -6270,6 +6284,7 @@ double CMediumProperties::VermaPruess(double k_init, double n_init, double n_t)
 
 	return k_t;
 }
+
 ///////////////////////////////////////////////////////////////////////////
 // old data structure functions //OK411
 
@@ -6864,7 +6879,44 @@ double CMediumProperties::PorosityVolStrain(long index, double val0, CFiniteElem
 		val = 1e-6; // lower limit of porostity
 	return val;
 }
-
+/*************************************************************************************
+FEMLib-Method:
+Task: Returns the new porosity which will be calculated using volumetric strain.
+Programing:
+07.2018 VK Implementation
+last modification:
+*************************************************************************************/
+double CMediumProperties::PorosityVolStrain2(long index, double val0, CFiniteElementStd* assem) // TODO: VK
+{
+	double val = val0, valnew = 0.0, vol_strain_temp = 0., strain_temp[3] = {0.}, strain_nodes[20] = {0.};
+	// int idx_temp[3]={0}, ele_index, nnodes = assem->nnodes;
+	int idx_temp[3] = {0}, nnodes = assem->nnodes;
+	//SolidProp::CSolidProperties* m_msp = NULL;
+	//group = m_pcs->m_msh->ele_vector[number]->GetPatchIndex();
+	//m_msp = msp_vector[group];
+	// CRFProcessDeformation *dm_pcs = (CRFProcessDeformation *) this;
+	int dim = m_pcs->m_msh->GetCoordinateFlag() / 10;
+	if (dim == 2)
+		if (assem->axisymmetry)
+			dim = 3;
+	idx_temp[0] = assem->dm_pcs->GetNodeValueIndex("STRAIN_XX");
+	idx_temp[1] = assem->dm_pcs->GetNodeValueIndex("STRAIN_YY");
+	idx_temp[2] = assem->dm_pcs->GetNodeValueIndex("STRAIN_ZZ");
+	// ele_index = index;
+	for (int j = 0; j < dim; j++)
+	{
+		for (int i = 0; i < nnodes; i++)
+			strain_nodes[i] = assem->dm_pcs->GetNodeValue(assem->dm_pcs->m_msh->ele_vector[index]->getNodeIndices()[i],idx_temp[j]);
+		strain_temp[j] = assem->interpolate(strain_nodes);
+	}
+	for (int j = 0; j < dim; j++)
+		vol_strain_temp += strain_temp[j];
+	//@TODO Biot coefficient should not be hard coded
+	valnew = (val + (0.16 * vol_strain_temp)) / (1 + vol_strain_temp); //VK: Hard coding Biot eoffeicient to 0.6
+	if (valnew < MKleinsteZahl)
+		valnew = 1e-6; // lower limit of porosity
+	return valnew;
+}
 /**************************************************************************
    FEMLib-Method: TortuosityFunction
    Task:
