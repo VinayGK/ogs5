@@ -22,10 +22,10 @@
 #include "mathlib.h"
 // Problems
 //#include "rf_mfp_new.h"
+#include "SparseMatrixDOK.h"
+#include "eos.h"
 #include "rf_mmp_new.h"
 #include "rf_msp_new.h"
-#include "eos.h"
-#include "SparseMatrixDOK.h"
 
 #include "pcs_dm.h" // displacement coupled
 #include "rfmat_cp.h"
@@ -53,8 +53,8 @@ using Math_Group::CSparseMatrix;
 #ifdef OGS_USE_CVODE
 extern "C" {
 #include <cvode/cvode.h> /* prototypes for CVODE fcts., consts. */
-#include <nvector/nvector_serial.h> /* serial N_Vector types, fcts., macros */
 #include <cvode/cvode_dense.h> /* prototype for CVDense */
+#include <nvector/nvector_serial.h> /* serial N_Vector types, fcts., macros */
 #include <sundials/sundials_dense.h> /* definitions DlsMat DENSE_ELEM */
 #include <sundials/sundials_types.h> /* definition of type realtype */
 }
@@ -236,9 +236,9 @@ CFiniteElementStd::CFiniteElementStd(CRFProcess* Pcs, const int C_Sys_Flad, cons
 
 		/* TODO no enum item for this case
 		case 'U':                             // Unconfined flow
-		    PcsType = EPT_UNCONFINED_FLOW;
-		    break;
-		    */
+			PcsType = EPT_UNCONFINED_FLOW;
+			break;
+			*/
 
 		// case 'G':                             // Groundwater flow
 		case GROUNDWATER_FLOW:
@@ -265,9 +265,9 @@ CFiniteElementStd::CFiniteElementStd(CRFProcess* Pcs, const int C_Sys_Flad, cons
 
 		/* TODO no enum item for this case
 		case 'C':                             // Componental flow
-		    PcsType = EPT_COMPONENTAL_FLOW;
-		    break;
-		    */
+			PcsType = EPT_COMPONENTAL_FLOW;
+			break;
+			*/
 
 		// case 'H':                             // heat transport
 		case HEAT_TRANSPORT:
@@ -614,8 +614,7 @@ void CFiniteElementStd::SetMemory()
 	if (pcs->Memory_Type == 0)
 	{
 		if (PcsType == EPT_MULTIPHASE_FLOW || PcsType == EPT_PSGLOBAL || PcsType == EPT_MULTI_COMPONENTIAL_FLOW
-		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM
-		    || PcsType == EPT_TES) // 04.3.2009 PCH
+		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES) // 04.3.2009 PCH
 			Mass2->LimitSize(Size, Size);
 		else
 			Mass->LimitSize(nnodes, nnodes); // Mass->LimitSize(nnodes); // unsymmetric in case of Upwinding
@@ -623,9 +622,7 @@ void CFiniteElementStd::SetMemory()
 		Laplace->LimitSize(Size, Size);
 
 		if (PcsType == EPT_HEAT_TRANSPORT || PcsType == EPT_MASS_TRANSPORT || PcsType == EPT_GAS_FLOW
-		    || PcsType == EPT_MULTI_COMPONENTIAL_FLOW
-		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM
-		    || PcsType == EPT_TES)
+		    || PcsType == EPT_MULTI_COMPONENTIAL_FLOW || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES)
 		{
 			Advection->LimitSize(Size, Size); // SB4200
 			Storage->LimitSize(Size, Size); // SB4200
@@ -647,8 +644,7 @@ void CFiniteElementStd::SetMemory()
 		Laplace = EleMat->GetLaplace();
 		// Advection, Storage, Content SB4200
 		if (PcsType == EPT_MASS_TRANSPORT || PcsType == EPT_HEAT_TRANSPORT || PcsType == EPT_MULTI_COMPONENTIAL_FLOW
-		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM
-		    || PcsType == EPT_TES)
+		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES)
 		{
 			Advection = EleMat->GetAdvection();
 			Storage = EleMat->GetStorage();
@@ -739,9 +735,9 @@ void CFiniteElementStd::ConfigureCoupling(CRFProcess* pcs, const int* Shift, boo
 			}
 			break;
 
-		// No enum item for this case
-		// case 'U':                             // Unconfined flow
-		// 	break;
+			// No enum item for this case
+			// case 'U':                             // Unconfined flow
+			// 	break;
 
 		case GROUNDWATER_FLOW:
 			if (T_Flag)
@@ -767,9 +763,9 @@ void CFiniteElementStd::ConfigureCoupling(CRFProcess* pcs, const int* Shift, boo
 			}
 			break;
 
-		// No enum item for this case
-		// case 'C':                             // Componental flow
-		//	break;
+			// No enum item for this case
+			// case 'C':                             // Componental flow
+			//	break;
 
 		case HEAT_TRANSPORT:
 			// SB CMCD this needs to be fixed
@@ -1231,7 +1227,7 @@ void CFiniteElementStd::CalcOverlandCKWRatNodes(int i, int j, double* head, doub
 	else
 	{
 		if (MediaProp->channel == 1)
-			*ckwr = flow_depth* pow(flow_depth * width / (2 * flow_depth + width), depth_exp);
+			*ckwr = flow_depth * pow(flow_depth * width / (2 * flow_depth + width), depth_exp);
 		else
 			*ckwr = pow(flow_depth, depth_exp + 1);
 	}
@@ -1276,8 +1272,8 @@ void CFiniteElementStd::CalcOverlandUpwindedCoefficients(double** amat, double* 
    Programing:
    06/2007 JOD Implementation
 **************************************************************************/
-void CFiniteElementStd::CalcOverlandResidual(
-    double* head, double* swval, double* swold, double ast, double* residual, double** amat)
+void CFiniteElementStd::CalcOverlandResidual(double* head, double* swval, double* swold, double ast, double* residual,
+                                             double** amat)
 {
 	double sum;
 	double storinit[4], astor[4], rhs[4];
@@ -1314,8 +1310,8 @@ void CFiniteElementStd::CalcOverlandResidual(
    Programing:
    06/2007 JOD Implementation
 **************************************************************************/
-double CFiniteElementStd::CalcOverlandJacobiNodes(
-    int i, int j, double* head, double* headKeep, double akrw, double axx, double ayy, double** amat, double* sumjac)
+double CFiniteElementStd::CalcOverlandJacobiNodes(int i, int j, double* head, double* headKeep, double akrw, double axx,
+                                                  double ayy, double** amat, double* sumjac)
 {
 	double jacobi, gammaij, amatEps, amatKeep;
 
@@ -1377,8 +1373,8 @@ void CFiniteElementStd::CalcOverlandCoefficientsLine(double* head, double* axx, 
 	eslope = 1.0 / dhds;
 	eslope = pow(eslope, 1 - slope_exp);
 
-	*axx = eslope* fric* width / delt;
-	*ast = delt* width / (double)(nnodes * dt);
+	*axx = eslope * fric * width / delt;
+	*ast = delt * width / (double)(nnodes * dt);
 }
 /**************************************************************************
    FEMLib-Method:
@@ -1415,8 +1411,8 @@ void CFiniteElementStd::CalcOverlandCoefficientsQuad(double* head, double* axx, 
 	eslope = 1.0 / dhds;
 	eslope = pow(eslope, 1 - slope_exp);
 
-	*axx = eslope* fric* dy / dx; // ett/ell
-	*ayy = eslope* fric* dx / dy;
+	*axx = eslope * fric * dy / dx; // ett/ell
+	*ayy = eslope * fric * dx / dy;
 	*ast = delt / (double)(nnodes * dt);
 }
 /**************************************************************************
@@ -1467,8 +1463,8 @@ void CFiniteElementStd::CalcOverlandCoefficientsTri(double* head, double* axx, d
 	eslope = 1.0 / dhds;
 
 	eslope = pow(eslope, 1 - slope_exp);
-	*axx = eslope* fric* delt;
-	*ayy = eslope* fric* delt;
+	*axx = eslope * fric * delt;
+	*ayy = eslope * fric * delt;
 	*ast = delt / (double)(nnodes * dt);
 }
 
@@ -1580,8 +1576,8 @@ double CFiniteElementStd::CalCoefMass()
 						E_av = 2. / 3. * (*SolidProp->data_Youngs)(0) + 1. / 3. * (*SolidProp->data_Youngs)(1);
 
 						nu_ia = (*SolidProp->data_Youngs)(2);
-						nu_ai = nu_ia * (*SolidProp->data_Youngs)(1)
-						        / (*SolidProp->data_Youngs)(0); //  nu_ai=nu_ia*Ea/Ei
+						nu_ai
+						    = nu_ia * (*SolidProp->data_Youngs)(1) / (*SolidProp->data_Youngs)(0); //  nu_ai=nu_ia*Ea/Ei
 
 						nu_i = SolidProp->Poisson_Ratio();
 						//           12     13    21   23   31    32
@@ -1951,7 +1947,7 @@ double CFiniteElementStd::CalCoefMassPSGLOBAL(int dof_index)
 			variables[1] = T;
 			val = poro * (Sw)*FluidProp->drhodP(variables) / FluidProp->Density();
 			//		cout << FluidProp->fluid_name << " Pressure: " << P << " Temp: " << ": drhodP: " <<
-			//FluidProp->drhodP(P,T) << " density: " << FluidProp->Density() << "\n";
+			// FluidProp->drhodP(P,T) << " density: " << FluidProp->Density() << "\n";
 			break;
 		case 1: // Snw in the wetting equation
 			poro = MediaProp->Porosity(Index, pcs->m_num->ls_theta);
@@ -2081,7 +2077,7 @@ double CFiniteElementStd::CalCoefContent()
 			break;
 		case EPT_MASS_TRANSPORT: // Mass transport //SB4200
 		{
-// kg44 added changing Porosity for GEMS coupling
+		// kg44 added changing Porosity for GEMS coupling
 
 #ifdef GEM_REACT
 			// kg44 for GEMS coupling this should be updated to arbitrary flow processes
@@ -2283,8 +2279,8 @@ void CFiniteElementStd::CalCoefLaplace(bool Gravity, int ip)
 					double* pressureHead;
 					pressureHead = new double[8];
 					for (int i = 0; i < nnodes; i++)
-						pressureHead[i] = pcs->GetNodeValue(nodes[i], 1)
-						                  - pcs->m_msh->nod_vector[nodes[i]]->getData()[2];
+						pressureHead[i]
+						    = pcs->GetNodeValue(nodes[i], 1) - pcs->m_msh->nod_vector[nodes[i]]->getData()[2];
 					PG = interpolate(pressureHead);
 					delete[] pressureHead;
 
@@ -2520,8 +2516,20 @@ void CFiniteElementStd::CalCoefLaplace(bool Gravity, int ip)
 				fac_perm = MediaProp->PermeabilityFunctionPressure(Index, PG);
 			if (MediaProp->permeability_strain_model > 0) // 12.2012 WX
 				fac_perm *= MediaProp->PermeabilityFunctionStrain(Index, nnodes, h_fem);
-
 			tensor = MediaProp->PermeabilityTensor(Index);
+			if (MediaProp->permeability_model == 8)
+			{
+				double n_init = MediaProp->porosity_model_values[0];
+				double n_t = MediaProp->Porosity(Index, pcs->m_num->ls_theta);
+				double k_init = MediaProp->permeability_tensor[0];
+				w[0] = MediaProp->VermaPruess(k_init, n_init, n_t);
+				w[1]=w[2]=w[0];
+				//std::cout<<"porosity= " << n_t <<"\n"<< std::endl;
+				//std::cout << "permeability= " << w[0] << "\n" << std::endl;
+				for (size_t i = 0; i < dim; i++)
+					tensor[i * dim + i] = w[i];
+			}
+			
 
 			if (MediaProp->unconfined_flow_group == 2) // 3D unconfined GW JOD, 5.3.07
 				mat_fac = time_unit_factor * MediaProp->PermeabilitySaturationFunction(-PG, 0) / FluidProp->Viscosity();
@@ -2983,9 +2991,8 @@ void CFiniteElementStd::CalCoefLaplacePSGLOBAL(bool Gravity, int dof_index)
 				//			{
 				// Doing Upwind elements for saturation by divergent of pressure.
 				// Pnw upwind
-				//				int WhichNode = UpwindElement((int)(pcs->m_num->ele_upwind_method), 1); // TF: set, but never
-				//used
-				//				Snw = NodalVal_SatNW[WhichNode]; // TF: set, but never used
+				//				int WhichNode = UpwindElement((int)(pcs->m_num->ele_upwind_method), 1); // TF: set, but
+				//never  used 				Snw = NodalVal_SatNW[WhichNode]; // TF: set, but never used
 				//			}
 				//			else
 				//				Snw = interpolate(NodalVal_SatNW); // TF: set, but never used
@@ -3020,7 +3027,7 @@ void CFiniteElementStd::CalCoefLaplacePSGLOBAL(bool Gravity, int dof_index)
 			// Doing Upwind elements for saturation by divergent of pressure.
 			// Pnw upwind
 			//			int WhichNode = UpwindElement((int)(pcs->m_num->ele_upwind_method), 1); // TF: set, but never
-			//used
+			// used
 			//			Snw = NodalVal_SatNW[WhichNode]; // TF: set, but never used
 			//		}
 			//		else
@@ -3347,8 +3354,8 @@ void CFiniteElementStd::UpwindUnitCoord(int p, int point, int ind)
 					scale = MMin(scale, (1. - fabs(ur)) / fabs(alpha[0]));
 				if (fabs(us + alpha[1]) > 1.)
 					scale = MMin(scale, (1. - fabs(us)) / fabs(alpha[1]));
-				*rupw = ur + scale* alpha[0];
-				*supw = us + scale* alpha[1];
+				*rupw = ur + scale * alpha[0];
+				*supw = us + scale * alpha[1];
 			}
 			else if (upwind_meth == 2)
 			{
@@ -3407,9 +3414,9 @@ void CFiniteElementStd::UpwindUnitCoord(int p, int point, int ind)
 					scale = MMin(scale, (1. - fabs(us)) / fabs(alpha[1]));
 				if (fabs(ut + alpha[2]) > 1.)
 					scale = MMin(scale, (1. - fabs(ut)) / fabs(alpha[2]));
-				*rupw = ur + scale* alpha[0]; // ist die reihenfolge hier richtig?
-				*supw = us + scale* alpha[1]; // scale h?gt hier ja nur von dem letzten if ab..
-				*tupw = ut + scale* alpha[2];
+				*rupw = ur + scale * alpha[0]; // ist die reihenfolge hier richtig?
+				*supw = us + scale * alpha[1]; // scale h?gt hier ja nur von dem letzten if ab..
+				*tupw = ut + scale * alpha[2];
 			}
 			else if (upwind_meth == 2)
 			{
@@ -3810,8 +3817,9 @@ double CFiniteElementStd::CalcSUPGCoefficient(double* vel, int ip)
 		{
 			// taking into account time step
 			//          tau = 1.0 / sqrt(pow(2.0/dt ,2.0)+pow(2.0*v_mag/ele_len,2.0));
-			tau = 1.0 / sqrt((2.0 / dt) * (2.0 / dt) + (2.0 * v_mag / ele_len) * (2.0 * v_mag / ele_len)
-			                 + (4.0 * diff / (ele_len * ele_len)) * (4.0 * diff / (ele_len * ele_len)));
+			tau = 1.0
+			      / sqrt((2.0 / dt) * (2.0 / dt) + (2.0 * v_mag / ele_len) * (2.0 * v_mag / ele_len)
+			             + (4.0 * diff / (ele_len * ele_len)) * (4.0 * diff / (ele_len * ele_len)));
 		}
 		break;
 	}
@@ -4079,7 +4087,7 @@ void CFiniteElementStd::UpwindAlphaMass(double* alpha)
 		case 3: // Hexahedra
 		{
 			/* Elementgeometriedaten */
-			static double* invjac, jacobi[9], detjac;
+			static double *invjac, jacobi[9], detjac;
 			/* Elementdaten */
 			// static double v_rst[3];
 
@@ -4186,22 +4194,22 @@ void CFiniteElementStd::UpwindSummandMass(const int gp, int& gp_r, int& gp_s, in
 			u2 = MXPGaussPkt(nGauss, gp_s);
 			u3 = MXPGaussPkt(nGauss, gp_t);
 			// derived from MPhi3D_SUPG
-			summand[0] = +alpha[0] * (1 + u2) * (1 + u3) + alpha[1] * (1 + u1) * (1 + u3)
-			             + alpha[2] * (1 + u1) * (1 + u2);
-			summand[1] = -alpha[0] * (1 + u2) * (1 + u3) + alpha[1] * (1 - u1) * (1 + u3)
-			             + alpha[2] * (1 - u1) * (1 + u2);
-			summand[2] = -alpha[0] * (1 - u2) * (1 + u3) - alpha[1] * (1 - u1) * (1 + u3)
-			             + alpha[2] * (1 - u1) * (1 - u2);
-			summand[3] = +alpha[0] * (1 - u2) * (1 + u3) - alpha[1] * (1 + u1) * (1 + u3)
-			             + alpha[2] * (1 + u1) * (1 - u2);
-			summand[4] = +alpha[0] * (1 + u2) * (1 - u3) + alpha[1] * (1 + u1) * (1 - u3)
-			             - alpha[2] * (1 + u1) * (1 + u2);
-			summand[5] = -alpha[0] * (1 + u2) * (1 - u3) + alpha[1] * (1 - u1) * (1 - u3)
-			             - alpha[2] * (1 - u1) * (1 + u2);
-			summand[6] = -alpha[0] * (1 - u2) * (1 - u3) - alpha[1] * (1 - u1) * (1 - u3)
-			             - alpha[2] * (1 - u1) * (1 - u2);
-			summand[7] = +alpha[0] * (1 - u2) * (1 - u3) - alpha[1] * (1 + u1) * (1 - u3)
-			             - alpha[2] * (1 + u1) * (1 - u2);
+			summand[0]
+			    = +alpha[0] * (1 + u2) * (1 + u3) + alpha[1] * (1 + u1) * (1 + u3) + alpha[2] * (1 + u1) * (1 + u2);
+			summand[1]
+			    = -alpha[0] * (1 + u2) * (1 + u3) + alpha[1] * (1 - u1) * (1 + u3) + alpha[2] * (1 - u1) * (1 + u2);
+			summand[2]
+			    = -alpha[0] * (1 - u2) * (1 + u3) - alpha[1] * (1 - u1) * (1 + u3) + alpha[2] * (1 - u1) * (1 - u2);
+			summand[3]
+			    = +alpha[0] * (1 - u2) * (1 + u3) - alpha[1] * (1 + u1) * (1 + u3) + alpha[2] * (1 + u1) * (1 - u2);
+			summand[4]
+			    = +alpha[0] * (1 + u2) * (1 - u3) + alpha[1] * (1 + u1) * (1 - u3) - alpha[2] * (1 + u1) * (1 + u2);
+			summand[5]
+			    = -alpha[0] * (1 + u2) * (1 - u3) + alpha[1] * (1 - u1) * (1 - u3) - alpha[2] * (1 - u1) * (1 + u2);
+			summand[6]
+			    = -alpha[0] * (1 - u2) * (1 - u3) - alpha[1] * (1 - u1) * (1 - u3) - alpha[2] * (1 - u1) * (1 - u2);
+			summand[7]
+			    = +alpha[0] * (1 - u2) * (1 - u3) - alpha[1] * (1 + u1) * (1 - u3) - alpha[2] * (1 + u1) * (1 - u2);
 			for (i = 0; i < 8; i++)
 				summand[i] *= 0.125;
 		}
@@ -4314,8 +4322,8 @@ void CFiniteElementStd::CalcMassMCF()
 				for (i = 0; i < nnodes; i++)
 				{
 					for (j = 0; j < nnodes; j++)
-						(*Mass2)(i + ish, j + jsh) += fkt * MassMatrixElements[in * nDF + jn] * shapefct[i]
-						                              * shapefct[j];
+						(*Mass2)(i + ish, j + jsh)
+						    += fkt * MassMatrixElements[in * nDF + jn] * shapefct[i] * shapefct[j];
 				}
 			}
 		}
@@ -4826,8 +4834,8 @@ void CFiniteElementStd::CalcLaplace()
 							const int km = dim * k;
 							for (std::size_t l = 0; l < dim; l++)
 							{
-								(*Laplace)(iish, jjsh) += fkt * dshapefct[ksh] * mat[km + l]
-								                          * dshapefct[l * nnodes + j];
+								(*Laplace)(iish, jjsh)
+								    += fkt * dshapefct[ksh] * mat[km + l] * dshapefct[l * nnodes + j];
 							}
 						}
 					} // j: nodes
@@ -4847,8 +4855,8 @@ void CFiniteElementStd::CalcLaplace()
 							const int km = dim * k;
 							for (size_t l = 0; l < dim; l++)
 							{
-								(*Laplace)(iish, jjsh) += fkt * dshapefct[ksh] * mat[km + l]
-								                          * dshapefct[l * nnodes + j];
+								(*Laplace)(iish, jjsh)
+								    += fkt * dshapefct[ksh] * mat[km + l] * dshapefct[l * nnodes + j];
 							}
 						}
 					} // j: nodes
@@ -5021,8 +5029,9 @@ double CFiniteElementStd::CalcCoefDualTransfer()
 			ExFac = m_matrix->transfer_coefficient;
 			// Dual by van Genuchten
 			if (ExFac > 0.0)
-				matrix_conductivity = 0.5 * (m_matrix->PermeabilitySaturationFunction(Sm, 0)
-				                             + m_matrix->PermeabilitySaturationFunction(Sf, 0))
+				matrix_conductivity = 0.5
+				                      * (m_matrix->PermeabilitySaturationFunction(Sm, 0)
+				                         + m_matrix->PermeabilitySaturationFunction(Sf, 0))
 				                      / FluidProp->Viscosity();
 
 			else // by LBNL. WW
@@ -5316,8 +5325,8 @@ void CFiniteElementStd::CalcContentMCF()
 			{
 				for (j = 0; j < nnodes; j++)
 				{
-					(*Content)(i + ish, j + ish) += fkt * ContentMatrixElements[in * nDF + in] * shapefct[i]
-					                                * shapefct[j];
+					(*Content)(i + ish, j + ish)
+					    += fkt * ContentMatrixElements[in * nDF + in] * shapefct[i] * shapefct[j];
 				}
 			}
 		}
@@ -5345,8 +5354,8 @@ void CFiniteElementStd::CalCoefContentMCF()
 		for (in = 0; in < nDF - 2; in++)
 			retardation_factore[in] = 1.0 + (1.0 - poro) * SolidProp->Density(0) * FluidProp->Kd[in] * pow(poro, -1.0);
 		for (in = 2; in < nDF; in++)
-			ContentMatrixElements[(nDF + 1) * in] = poro * rho * retardation_factore[in - 2]
-			                                        * FluidProp->lambda[in - 2];
+			ContentMatrixElements[(nDF + 1) * in]
+			    = poro * rho * retardation_factore[in - 2] * FluidProp->lambda[in - 2];
 	}
 }
 /***************************************************************************
@@ -5407,7 +5416,8 @@ void CFiniteElementStd::CalcRHS_by_ThermalDiffusion()
 		     * pow(TG / PhysicalConstant::CelsiusZeroInKelvin, 1.8);
 		rhov = humi * FluidProp->vaporDensity(TG);
 		drdT = (FluidProp->vaporDensity_derivative(TG) * humi
-		        - rhov * PG / (SpecificGasConstant::WaterVapour * rhow * TG * TG)) / rhow;
+		        - rhov * PG / (SpecificGasConstant::WaterVapour * rhow * TG * TG))
+		       / rhow;
 		Dtv = time_unit_factor * Dv * drdT;
 
 		//    }
@@ -5957,90 +5967,90 @@ void CFiniteElementStd::Assemble_Gravity_Multiphase()
 	// TEST OUTPUT
 	// RHS->Write();
 }
-////////////////////////////////////////////////////////////////
-/*
-   void  CFiniteElementStd::Assemble_Gravity()
-   {
-   if((coordinate_system)%10!=2)
-     return;
-   int i, j, k, l;
-   // ---- Gauss integral
-   int gp, gp_r=0, gp_s=0, gp_t;
-   gp_t = 0;
-   double fkt, rho;
-   double k_rel_iteration;
-   // GEO
-   double geo_fac = MediaProp->geo_area;
+	////////////////////////////////////////////////////////////////
+	/*
+	   void  CFiniteElementStd::Assemble_Gravity()
+	   {
+	   if((coordinate_system)%10!=2)
+	     return;
+	   int i, j, k, l;
+	   // ---- Gauss integral
+	   int gp, gp_r=0, gp_s=0, gp_t;
+	   gp_t = 0;
+	   double fkt, rho;
+	   double k_rel_iteration;
+	   // GEO
+	   double geo_fac = MediaProp->geo_area;
 
-   k_rel_iteration = 1.0;
+	   k_rel_iteration = 1.0;
 
-   (*GravityMatrix) = 0.0;
-   // Loop over Gauss points
-   for (gp = 0; gp < nGaussPoints; gp++)
-   {
-   //---------------------------------------------------------
-   //  Get local coordinates and weights
-   //  Compute Jacobian matrix and its determination
-   //---------------------------------------------------------
-   fkt = GetGaussData(gp, gp_r, gp_s, gp_t);
+	   (*GravityMatrix) = 0.0;
+	   // Loop over Gauss points
+	   for (gp = 0; gp < nGaussPoints; gp++)
+	   {
+	   //---------------------------------------------------------
+	   //  Get local coordinates and weights
+	   //  Compute Jacobian matrix and its determination
+	   //---------------------------------------------------------
+	   fkt = GetGaussData(gp, gp_r, gp_s, gp_t);
 
-   //---------------------------------------------------------
-   // Compute geometry
-   //---------------------------------------------------------
-   getGradShapefunctValues(gp, 1); // Linear interpolation function
+	   //---------------------------------------------------------
+	   // Compute geometry
+	   //---------------------------------------------------------
+	   getGradShapefunctValues(gp, 1); // Linear interpolation function
 
-   // Material
-   CalCoefLaplace(true);
-   rho = FluidProp->Density(Index,unit,pcs->m_num->ls_theta);
-   if(gravity_constant<MKleinsteZahl) // HEAD version
-   rho = 1.0;
-   else if(HEAD_Flag) rho = 1.0;
-   else
-   rho *= gravity_constant;
+	   // Material
+	   CalCoefLaplace(true);
+	   rho = FluidProp->Density(Index,unit,pcs->m_num->ls_theta);
+	   if(gravity_constant<MKleinsteZahl) // HEAD version
+	   rho = 1.0;
+	   else if(HEAD_Flag) rho = 1.0;
+	   else
+	   rho *= gravity_constant;
 
-   fkt *= rho;
-   // Calculate mass matrix
-   for (i = 0; i < nnodes; i++)
-   for (j = 0; j < nnodes; j++)
-   {
-   if(j>i) continue;
-   for (k = 0; k < dim; k++)
-   {
-   for(l=0; l<dim; l++)
-   (*GravityMatrix)(i,j) += fkt*dshapefct[k*nnodes+i]
-   *mat[dim*k+l]* dshapefct[l*nnodes+j];
-   }
-   }
-   }
+	   fkt *= rho;
+	   // Calculate mass matrix
+	   for (i = 0; i < nnodes; i++)
+	   for (j = 0; j < nnodes; j++)
+	   {
+	   if(j>i) continue;
+	   for (k = 0; k < dim; k++)
+	   {
+	   for(l=0; l<dim; l++)
+	   (*GravityMatrix)(i,j) += fkt*dshapefct[k*nnodes+i]
+	   *mat[dim*k+l]* dshapefct[l*nnodes+j];
+	   }
+	   }
+	   }
 
-   //TEST OUTPUT
-   //GravityMatrix->Write();
+	   //TEST OUTPUT
+	   //GravityMatrix->Write();
 
-   double* G_coord = NULL;
-   if((coordinate_system)/10==1)
-   G_coord = X;
-   else if((coordinate_system)/10==2)
-   G_coord = Y;
-   else if((coordinate_system)/10==3)
-   G_coord = Z;
+	   double* G_coord = NULL;
+	   if((coordinate_system)/10==1)
+	   G_coord = X;
+	   else if((coordinate_system)/10==2)
+	   G_coord = Y;
+	   else if((coordinate_system)/10==3)
+	   G_coord = Z;
 
-   for (i = 0; i < nnodes; i++)
-   {
-   NodalVal[i] = 0.0;
-   for (j = 0; j < nnodes; j++)
-   NodalVal[i] -= (*GravityMatrix)(i,j)* G_coord[j];
-   }
+	   for (i = 0; i < nnodes; i++)
+	   {
+	   NodalVal[i] = 0.0;
+	   for (j = 0; j < nnodes; j++)
+	   NodalVal[i] -= (*GravityMatrix)(i,j)* G_coord[j];
+	   }
 
-   for (i=0;i<nnodes;i++)
-   {
-   pcs->eqs->b[NodeShift[problem_dimension_dm] + eqs_number[i]]
-   += k_rel_iteration* geo_fac*NodalVal[i];
-   (*RHS)(i+LocalShift) += NodalVal[i];
-   }
-   //TEST OUTPUT
-   //RHS->Write();
-   }
- */
+	   for (i=0;i<nnodes;i++)
+	   {
+	   pcs->eqs->b[NodeShift[problem_dimension_dm] + eqs_number[i]]
+	   += k_rel_iteration* geo_fac*NodalVal[i];
+	   (*RHS)(i+LocalShift) += NodalVal[i];
+	   }
+	   //TEST OUTPUT
+	   //RHS->Write();
+	   }
+	 */
 
 #ifdef OGS_USE_CVODE
 /**
@@ -6196,8 +6206,8 @@ void CFiniteElementStd::CalcSolidDensityRate()
 				const double rhoSR0 = 1.0;
 				const double rhoTil = 0.1;
 				const double omega = 2.0 * 3.1416;
-				gp_ele->rho_s_curr[gp] = rhoSR0
-				                         + rhoTil * sin(omega * aktuelle_zeit) / (1.0 - poro); // TN Test mass transfer
+				gp_ele->rho_s_curr[gp]
+				    = rhoSR0 + rhoTil * sin(omega * aktuelle_zeit) / (1.0 - poro); // TN Test mass transfer
 				gp_ele->q_R[gp] = rhoTil * omega * cos(omega * aktuelle_zeit) / (1.0 - poro); // TN Test mass transfer
 			}
 			else
@@ -6473,8 +6483,8 @@ void CFiniteElementStd::Cal_Velocity()
 
 					if (GasMassForm)
 					{ // TN otherwise wrong velocity
-						tmp_gp_velocity(i, gp) -= mat[dim * i + j] / FluidProp->Density(eos_arg) * vel[j]
-						                          / time_unit_factor;
+						tmp_gp_velocity(i, gp)
+						    -= mat[dim * i + j] / FluidProp->Density(eos_arg) * vel[j] / time_unit_factor;
 					}
 					else
 					{
@@ -7252,15 +7262,16 @@ void CFiniteElementStd::AssembleRHS(int dimension)
 			rho = 1.0;
 		else
 			rho *= gravity_constant;
-		//			rho *= gravity_constant/FluidProp->Viscosity();		// This seems to divide viscosity two times. Thus,
-		//wrong.
+		//			rho *= gravity_constant/FluidProp->Viscosity();		// This seems to divide viscosity two times.
+		//Thus,  wrong.
 
 		fktG *= rho;
 		for (int i = 0; i < nnodes; i++)
 			for (int j = 0; j < nnodes; j++)
 				for (size_t k = 0; k < dim; k++)
 				{
-					NodalVal[i] -= fkt * dshapefct[k * nnodes + j]
+					NodalVal[i] -= fkt
+					               * dshapefct[k * nnodes + j]
 					               // NW  dshapefct[dimension*nnodes+j] -> dshapefct[k*nnodes+j]
 					               * mat[dim * dimension + k] * shapefct[i] * NodalVal1[j];
 					//	*************************************
@@ -7268,7 +7279,8 @@ void CFiniteElementStd::AssembleRHS(int dimension)
 					if (HEAD_Flag)
 						continue;
 					//***************************************
-					NodalVal2[i] += fktG * dshapefct[k * nnodes + j]
+					NodalVal2[i] += fktG
+					                * dshapefct[k * nnodes + j]
 					                // NW  dshapefct[dimension*nnodes+j] -> dshapefct[k*nnodes+j]
 					                * mat[dim * dimension + k] * shapefct[i] * MeshElement->nodes[j]->getData()[2];
 				}
@@ -7363,8 +7375,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	// Initialize.
 	// if (pcs->Memory_Type==2) skip the these initialization
 	if (PcsType == EPT_MULTIPHASE_FLOW || PcsType == EPT_PSGLOBAL || PcsType == EPT_MULTI_COMPONENTIAL_FLOW
-	    || PcsType == EPT_THERMAL_NONEQUILIBRIUM
-	    || PcsType == EPT_TES)
+	    || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES)
 		(*Mass2) = 0.0;
 	else
 		(*Mass) = 0.0;
@@ -7468,8 +7479,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	if (pcs->PartialPS != 1) // PCH if not partial-pressure-based
 	{
 		if (PcsType == EPT_MULTIPHASE_FLOW || PcsType == EPT_PSGLOBAL || PcsType == EPT_MULTI_COMPONENTIAL_FLOW
-		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM
-		    || PcsType == EPT_TES)
+		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES)
 		{
 			*StiffMatrix = *Mass2;
 		}
@@ -7604,8 +7614,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	if (pcs->PartialPS != 1) // PCH if not partial-pressure-based
 	{
 		if (PcsType == EPT_MULTIPHASE_FLOW || PcsType == EPT_PSGLOBAL || PcsType == EPT_MULTI_COMPONENTIAL_FLOW
-		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM
-		    || PcsType == EPT_TES) // PCH
+		    || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES) // PCH
 			*AuxMatrix1 = *Mass2;
 		else
 			*AuxMatrix1 = *Mass;
@@ -7704,8 +7713,7 @@ void CFiniteElementStd::AssembleParabolicEquation()
 	}
 
 	if (PcsType == EPT_MULTIPHASE_FLOW || PcsType == EPT_PSGLOBAL || PcsType == EPT_MULTI_COMPONENTIAL_FLOW
-	    || PcsType == EPT_THERMAL_NONEQUILIBRIUM
-	    || PcsType == EPT_TES)
+	    || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES)
 	{
 		int nDF = 2;
 		if (PcsType == EPT_MULTI_COMPONENTIAL_FLOW || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES)
@@ -7840,7 +7848,7 @@ void CFiniteElementStd::add2GlobalMatrixII()
 // TEST
 #ifdef assmb_petsc_test
 	{
-		os_t << "\n------------------" << act_nodes* dof << "\n";
+		os_t << "\n------------------" << act_nodes * dof << "\n";
 		StiffMatrix->Write(os_t);
 		RHS->Write(os_t);
 
@@ -7899,8 +7907,7 @@ void CFiniteElementStd::add2GlobalMatrixII(const int block_cols)
 #endif
 	// For DOF>1:
 	if (PcsType == EPT_MULTIPHASE_FLOW || PcsType == EPT_PSGLOBAL || PcsType == EPT_MULTI_COMPONENTIAL_FLOW
-	    || PcsType == EPT_THERMAL_NONEQUILIBRIUM
-	    || PcsType == EPT_TES)
+	    || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES)
 	{
 		int nDF = 2;
 		if (PcsType == EPT_MULTI_COMPONENTIAL_FLOW || PcsType == EPT_THERMAL_NONEQUILIBRIUM || PcsType == EPT_TES)
@@ -8215,10 +8222,10 @@ void CFiniteElementStd::AssembleMixedHyperbolicParabolicEquation()
 		*AuxMatrix = *Storage;
 		(*AuxMatrix) *= fac_storage;
 		*StiffMatrix += *AuxMatrix;
-// Content matrix
-//*AuxMatrix      = *Content;		//SB, BG; Korrektur Stofftransport bei Mehrphasenströmung
-//(*AuxMatrix)   *= fac_content;
-//*StiffMatrix   += *AuxMatrix; // SB, BG
+		// Content matrix
+		//*AuxMatrix      = *Content;		//SB, BG; Korrektur Stofftransport bei Mehrphasenströmung
+		//(*AuxMatrix)   *= fac_content;
+		//*StiffMatrix   += *AuxMatrix; // SB, BG
 
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
 		//----------------------------------------------------------------------
@@ -8384,7 +8391,8 @@ void CFiniteElementStd::AssembleParabolicEquationNewton()
 		for (int j = 0; j < nnodes; j++)
 #if defined(NEW_EQS) // WW
 			(*pcs->eqs_new->A)(NodeShift[problem_dimension_dm] + eqs_number[i],
-			                   NodeShift[problem_dimension_dm] + eqs_number[j]) += jacobian[i][j]; // WW
+			                   NodeShift[problem_dimension_dm] + eqs_number[j])
+			    += jacobian[i][j]; // WW
 #else
 			MXInc(NodeShift[problem_dimension_dm] + eqs_number[i], NodeShift[problem_dimension_dm] + eqs_number[j],
 			      jacobian[i][j]);
@@ -8528,8 +8536,9 @@ void CFiniteElementStd::Assemble_strainCPL(const int phase)
 				NodalVal3[i]
 				    = -fac * (dm_pcs->GetNodeValue(nodes[i], Idx_dm1[1]) - dm_pcs->GetNodeValue(nodes[i], Idx_dm0[1]));
 				if (dim == 3) // 3D.
-					NodalVal4[i] = -fac * (dm_pcs->GetNodeValue(nodes[i], Idx_dm1[2])
-					                       - dm_pcs->GetNodeValue(nodes[i], Idx_dm0[2]));
+					NodalVal4[i]
+					    = -fac
+					      * (dm_pcs->GetNodeValue(nodes[i], Idx_dm1[2]) - dm_pcs->GetNodeValue(nodes[i], Idx_dm0[2]));
 			}
 		else if (Residual == 1) // Mono
 
@@ -8548,12 +8557,10 @@ void CFiniteElementStd::Assemble_strainCPL(const int phase)
 			// a_n is in dm_pcs->ARRAY
 			for (i = 0; i < nnodesHQ; i++)
 			{
-				NodalVal2[i]
-				    = -(pcs->GetNodeValue(nodes[i], idx_vel_disp[0]) + fac * pcs->GetNodeValue(nodes[i], Idx_dm0[0])
-				        + u_n[nodes[i]] * dt);
-				NodalVal3[i]
-				    = -(pcs->GetNodeValue(nodes[i], idx_vel_disp[1]) + fac * pcs->GetNodeValue(nodes[i], Idx_dm0[1])
-				        + u_n[nodes[i] + NodeShift[1]] * dt);
+				NodalVal2[i] = -(pcs->GetNodeValue(nodes[i], idx_vel_disp[0])
+				                 + fac * pcs->GetNodeValue(nodes[i], Idx_dm0[0]) + u_n[nodes[i]] * dt);
+				NodalVal3[i] = -(pcs->GetNodeValue(nodes[i], idx_vel_disp[1])
+				                 + fac * pcs->GetNodeValue(nodes[i], Idx_dm0[1]) + u_n[nodes[i] + NodeShift[1]] * dt);
 				if (dim == 3) // 3D.
 					NodalVal4[i]
 					    = -(pcs->GetNodeValue(nodes[i], idx_vel_disp[2]) + fac * pcs->GetNodeValue(nodes[i], Idx_dm0[2])
@@ -8593,9 +8600,7 @@ void CFiniteElementStd::Assemble_strainCPL(const int phase)
  */
 //**************************************************************************
 #if defined(USE_PETSC) // && !defined(other parallel libs)//03~04.3012. WW
-void CFiniteElementStd::Assemble_strainCPL_Matrix(const double, const int)
-{
-}
+void CFiniteElementStd::Assemble_strainCPL_Matrix(const double, const int) {}
 #else
 void CFiniteElementStd::Assemble_strainCPL_Matrix(const double fac, const int phase)
 {
@@ -8650,8 +8655,8 @@ void CFiniteElementStd::AssembleMassMatrix(int option)
 	int gp;
 	int gp_r = 0, gp_s = 0, gp_t = 0;
 	double fkt; // WW ,mat_fac;
-// Material
-// WW mat_fac = 1.0;
+	// Material
+	// WW mat_fac = 1.0;
 
 #if defined(NEW_EQS)
 	CSparseMatrix* A = NULL; // PCH
@@ -8786,10 +8791,10 @@ void CFiniteElementStd::Config()
 		}
 	}
 
-// i_buff = nn*nn;
-// for(i = 0; i < i_buff; i++)
-//  local_matrix[i] = 0.;
-// If deformation related
+		// i_buff = nn*nn;
+		// for(i = 0; i < i_buff; i++)
+		//  local_matrix[i] = 0.;
+		// If deformation related
 
 #else
 	// EQS indices
@@ -10864,8 +10869,8 @@ void CFiniteElementStd::Assemble_RHS_HEAT_TRANSPORT()
 			for (i = 0; i < nnodes; i++)
 				for (j = 0; j < nnodes; j++)
 					for (size_t k = 0; k < dim; k++)
-						NodalVal[i + ii * nnodes] += fkt * vel[k] * shapefct[i] * dshapefct[k * nnodes + j]
-						                             * NodalValC1[j];
+						NodalVal[i + ii * nnodes]
+						    += fkt * vel[k] * shapefct[i] * dshapefct[k * nnodes + j] * NodalValC1[j];
 		}
 	}
 	for (ii = 0; ii < pcs->dof; ii++)
@@ -11580,7 +11585,8 @@ void CFiniteElementStd::CalcEnergyNorm_Dual(double& err_norm0, double& err_normn
 	AuxMatrix1->multi(NodalVal0, NodalVal);
 	for (i = 0; i < nnodes; i++)
 		err_normn += (fm * (atol + rtol * max(NodalVal3[i], x_n[nodes[i]]))
-		              - ff * (atol + rtol * max(NodalVal4[i], x_n[nodes[i] + cshift]))) * NodalVal[i];
+		              - ff * (atol + rtol * max(NodalVal4[i], x_n[nodes[i] + cshift])))
+		             * NodalVal[i];
 	//
 	//
 }

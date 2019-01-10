@@ -1735,6 +1735,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 		switch (Flow_Type)
 		{
 			case 0: // Liquid flow
+			{
 				// For monolithic scheme and liquid flow, the limit of positive pressure must be removed
 				if (pcs->Neglect_H_ini == 2) // WX
 					idx_p1_ini = h_pcs->GetNodeValueIndex("PRESSURE1_Ini");
@@ -1752,11 +1753,14 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					AuxNodal[i] = LoadFactor * val_n;
 				}
 				break;
+				}
 			case 10: // Ground_flow. Will be merged to case 0
+		    {
 				// WW dent_w =  m_mfp->Density();
 				for (i = 0; i < nnodes; i++)
 					AuxNodal[i] = LoadFactor * h_pcs->GetNodeValue(nodes[i], idx_P1);
 				break;
+				}
 			case 1: // Richards flow
 			{
 				// WX:08.2011
@@ -1805,7 +1809,8 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 									AuxNodal[i] = LoadFactor * S_e * smat->bishop_model_value * val_n;
 									break;
 								case 2:
-									bishop_coef_ini = pow(S_e_ini, smat->bishop_model_value);
+									//@TODO: Bishop saturation limits should be different than van Genuchten saturation limits
+									bishop_coef_ini = pow((sw_ini-0.3)/(0.7), smat->bishop_model_value); //changes VK 13.11.2018
 									AuxNodal[i] = LoadFactor * pow(S_e, smat->bishop_model_value) * val_n;
 									break;
 								case 3:
@@ -1840,8 +1845,8 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					}
 					break;
 				}
-				case 2:
-				{ // Multi-phase-flow: p_g-Sw*p_c
+			case 2: // Multi-phase-flow: p_g-Sw*p_c
+			{ 
 					// 07.2011. WW
 					const int dim_times_nnodesHQ(dim * nnodesHQ);
 					for (i = 0; i < dim_times_nnodesHQ; i++)
@@ -1943,8 +1948,8 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 
 					break;
 				}
-				case 3: // Multi-phase-flow: SwPw+SgPg	// PCH 05.05.2009
-				{
+			case 3: // Multi-phase-flow: SwPw+SgPg	// PCH 05.05.2009
+			{
 					for (i = 0; i < nnodes; i++)
 					{
 						double Snw = h_pcs->GetNodeValue(nodes[i], idx_Snw);
@@ -1959,7 +1964,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					}
 					break;
 				}
-			} // end switch
+		} // end switch
 
 				// If dymanic
 				if (dynamic)
@@ -2569,6 +2574,13 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				dS += S_Water;
 				for (i = 0; i < 3; i++)
 					dstress[i] -= dS * smat->Max_SwellingPressure;
+			}
+			else if (smat->SwellingPressureType == 5) // VK: 07.2018 non linear swelling model 
+			{
+				dS = -interpolate(AuxNodal_S0, 1);
+				dS += S_Water;
+				for (i = 0; i < 3; i++)
+					dstress[i] -= pow(dS,smat->SwellingLawExponent) * smat->Max_SwellingPressure;
 			}
 			/*
 			   else if(smat->SwellingPressureType==3||smat->SwellingPressureType==4) // TEP model

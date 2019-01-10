@@ -118,6 +118,11 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 				in_sd >> Max_SwellingPressure;
 				in_sd.clear();
 			}
+			else if (SwellingPressureType == 5)
+			{
+				in_sd >> Max_SwellingPressure >> SwellingLawExponent;
+				in_sd.clear();
+			}
 			// 10.03.2008 WW
 			else if (SwellingPressureType == 3 || SwellingPressureType == 4)
 			{
@@ -1035,6 +1040,7 @@ CSolidProperties::CSolidProperties()
 
 	SwellingPressureType = -1;
 	Max_SwellingPressure = 0.0;
+	SwellingLawExponent = 1.0; //VK: non lnear swelling law, 07.2018
 	// Default, elasticity
 	Plasticity_type = -1;
 

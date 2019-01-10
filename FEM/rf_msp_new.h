@@ -214,6 +214,7 @@ private:
 	// Swelling pressure
 	int SwellingPressureType;
 	double Max_SwellingPressure;
+	double SwellingLawExponent; //VK: 2018 added for non linear swelling
 	//
 	std::string CurveVariable_Conductivity;
 	int CurveVariableType_Conductivity;
