@@ -1733,6 +1733,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 		switch (Flow_Type)
 		{
 			case 0: // Liquid flow
+			{
 				// For monolithic scheme and liquid flow, the limit of positive pressure must be removed
 				if (pcs->Neglect_H_ini == 2) // WX
 					idx_p1_ini = h_pcs->GetNodeValueIndex("PRESSURE1_Ini");
@@ -1804,8 +1805,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 									AuxNodal[i] = LoadFactor * S_e * smat->bishop_model_value * val_n;
 									break;
 								case 2:
-									//@TODO: Bishop saturation limits should be different than van Genuchten saturation limits
-									bishop_coef_ini = pow((sw_ini-0.3)/(0.7), smat->bishop_model_value); //changes VK 13.11.2018
+									bishop_coef_ini = pow(S_e_ini, smat->bishop_model_value);
 									AuxNodal[i] = LoadFactor * pow(S_e, smat->bishop_model_value) * val_n;
 									break;
 								case 3:
@@ -1943,8 +1943,8 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 
 					break;
 				}
-			case 3: // Multi-phase-flow: SwPw+SgPg	// PCH 05.05.2009
-			{
+				case 3: // Multi-phase-flow: SwPw+SgPg	// PCH 05.05.2009
+				{
 					for (i = 0; i < nnodes; i++)
 					{
 						double Snw = h_pcs->GetNodeValue(nodes[i], idx_Snw);
@@ -1959,7 +1959,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					}
 					break;
 				}
-		} // end switch
+			} // end switch
 
 				// If dymanic
 				if (dynamic)
@@ -1988,7 +1988,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				for (j = 0; j < nnodesHQ; j++)
 					for (k = 0; k < nnodesHQ; k++)
 						(*RHS)[i * nnodesHQ + j]
-						    += (*Mass)(j, k) * ((*dAcceleration)(i * nnodesHQ + k) + a_n[nodes[k] + NodeShift[i]]);
+						    += (*Mass)(j, k) * ((*dAcceleration)(i* nnodesHQ + k) + a_n[nodes[k] + NodeShift[i]]);
 
 // RHS->Write();
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//06.2013. WW
@@ -2522,7 +2522,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				// strain[3] to zero for 2D (plane strain)
 				double local_res(0.);
 				smat->LocalNewtonMinkley(dt, strain_curr, stress_curr, eps_K_curr, eps_M_curr, eps_pl_curr, e_pl_v,
-				                         e_pl_eff, lam, ConsD, t1, local_res);
+										 e_pl_eff, lam, ConsD, t1, local_res);
 
 				// Then update (and reduce for 2D) stress increment vector and reduce (for 2D) ConsistDep, update
 				// internal variables
@@ -3733,7 +3733,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 
 					for (size_t k = 0; k < ele_dim; k++)
 						for (size_t l = 0; l < ele_dim; l++)
-							(*BDG)(k, ele_dim* i + l) += fkt * (*AuxMatrix)(k, l);
+							(*BDG)(k, ele_dim * i + l) += fkt * (*AuxMatrix)(k, l);
 					//
 					// P*D*B
 					setB_Matrix(i);
@@ -3741,7 +3741,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					PeDe->multi(*B_matrix, *AuxMatrix);
 					for (size_t k = 0; k < ele_dim; k++)
 						for (size_t l = 0; l < ele_dim; l++)
-							(*PDB)(ele_dim* i + k, l) += fkt * (*AuxMatrix)(k, l) / area;
+							(*PDB)(ele_dim * i + k, l) += fkt * (*AuxMatrix)(k, l) / area;
 				}
 			}
 		} // End of RHS assembly
@@ -3763,7 +3763,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 						f_j = 0.0;
 						for (size_t ii = 0; ii < ele_dim; ii++)
 							for (size_t jj = 0; jj < ele_dim; jj++)
-								f_j += (*BDG)(k, ele_dim* i + ii) * (*DtD)(ii, jj) * (*PDB)(ele_dim* j + jj, l);
+								f_j += (*BDG)(k, ele_dim * i + ii) * (*DtD)(ii, jj) * (*PDB)(ele_dim * j + jj, l);
 						(*Stiffness)(i + k * nnodesHQ, l * nnodesHQ + j) -= f_j / Jac_e;
 					}
 			}
@@ -3879,10 +3879,10 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 		if (sdp->CreepModel() == 1001) // Burgers
 		{
 			Strain_Kel = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												  // cases (LengthBS) may follow later
+			                                      // cases (LengthBS) may follow later
 			*Strain_Kel = 0.0;
 			Strain_Max = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												  // cases (LengthBS) may follow later
+			                                      // cases (LengthBS) may follow later
 			*Strain_Max = 0.0;
 			Strain_t_ip = new Matrix(6, NGPoints);
 			*Strain_t_ip = 0.0;
@@ -3895,13 +3895,13 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 		if (sdp->CreepModel() == 1002) // Minkley
 		{
 			Strain_Kel = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												  // cases (LengthBS) may follow later
+			                                      // cases (LengthBS) may follow later
 			*Strain_Kel = 0.0;
 			Strain_Max = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												  // cases (LengthBS) may follow later
+			                                      // cases (LengthBS) may follow later
 			*Strain_Max = 0.0;
 			Strain_pl = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												 // cases (LengthBS) may follow later
+			                                     // cases (LengthBS) may follow later
 			*Strain_pl = 0.0;
 			Strain_t_ip = new Matrix(6, NGPoints);
 			*Strain_t_ip = 0.0;
