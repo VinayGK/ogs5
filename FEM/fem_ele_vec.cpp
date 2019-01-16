@@ -1810,8 +1810,10 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 									break;
 								case 2:
 									//@TODO: Bishop saturation limits should be different than van Genuchten saturation limits
-									bishop_coef_ini = pow((sw_ini-0.3)/(0.7), smat->bishop_model_value); //changes VK 13.11.2018
-									AuxNodal[i] = LoadFactor * pow(S_e, smat->bishop_model_value) * val_n;
+									bishop_coef_ini = pow(max(sw_ini-0.3,0.0)/(0.7), smat->bishop_model_value); //changes VK 13.11.2018
+									AuxNodal[i] = LoadFactor
+									      * pow(max(m_mmp->SaturationCapillaryPressureFunction(-val_n)-0.3, 0.0)
+									                / (0.7), smat->bishop_model_value)* val_n;
 									break;
 								case 3:
 									h_pcs->GetNodeValue(nodes[i], idx_p1_ini) < smat->bishop_model_value
