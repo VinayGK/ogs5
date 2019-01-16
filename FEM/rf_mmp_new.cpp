@@ -6912,7 +6912,7 @@ double CMediumProperties::PorosityVolStrain2(long index, double val0, CFiniteEle
 	for (int j = 0; j < dim; j++)
 		vol_strain_temp += strain_temp[j];
 	//@TODO Biot coefficient should not be hard coded
-	valnew = (val + (0.16 * vol_strain_temp)) / (1 + vol_strain_temp); //VK: Hard coding Biot eoffeicient to 0.6
+	valnew = (val + (0.16 * vol_strain_temp)) / (1 + vol_strain_temp); //VK: Hard coding Biot eoffeicient to 0.16
 	if (valnew < MKleinsteZahl)
 		valnew = 1e-6; // lower limit of porosity
 	return valnew;
