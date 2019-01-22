@@ -6869,12 +6869,8 @@ double CMediumProperties::PorosityVolumetricChemicalReaction(long index)
 double CMediumProperties::PorosityVolStrain(long index, double val0, CFiniteElementStd* assem)
 {
 	double val = val0, vol_strain_temp = 0., strain_temp[3] = {0.}, strain_nodes[20] = {0.};
-	int idx_temp[3] = {0}, nnodes = assem->nnodes;
-	double group, sw_ini[20] = {0.};
 	// WW int idx_temp[3]={0}, ele_index, nnodes = assem->nnodes;
-	SolidProp::CSolidProperties* m_msp = NULL;
-	group = m_pcs->m_msh->ele_vector[number]->GetPatchIndex();
-	m_msp = msp_vector[group];
+	int idx_temp[3] = {0}, nnodes = assem->nnodes;
 	// WW CRFProcessDeformation *dm_pcs = (CRFProcessDeformation *) this;
 	int dim = m_pcs->m_msh->GetCoordinateFlag() / 10;
 	if (dim == 2)
@@ -6893,7 +6889,14 @@ double CMediumProperties::PorosityVolStrain(long index, double val0, CFiniteElem
 	}
 	for (int j = 0; j < dim; j++)
 		vol_strain_temp += strain_temp[j];
-	val += vol_strain_temp;
+	val += m_msp->Biot_Coefficient() * (vol_strain_temp); // VK: added 01.2019
+	if (m_msp->SwellingPressureType == 5)
+	{
+		double PG = Fem_Ele_Std->interpolate(Fem_Ele_Std->NodalVal1); // Capillary pressure
+		double Sw = Fem_Ele_Std->MediaProp->SaturationCapillaryPressureFunction(-PG);
+		m_msp->Calculate_Lame_Constant();
+		val -= m_msp->Max_SwellingPressure * (Sw - 0.227512) / (3 * (m_msp->K));
+	}
 	if (val < MKleinsteZahl)
 		val = 1e-6; // lower limit of porostity
 	return val;
