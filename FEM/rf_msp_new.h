@@ -93,6 +93,7 @@ public:
 	int GetConductModel() const { return Conductivity_mode; }
 	double Thermal_Expansion() const { return ThermalExpansion; }
 	double Poisson_Ratio() const { return PoissonRatio; }
+	double Biot_Coefficient() const { return biot_const; } //VK: implemented 01.2019
 	// Elasticity
 	void Calculate_Lame_Constant();
 
