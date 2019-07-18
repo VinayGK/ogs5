@@ -8,3 +8,4 @@ svnInfo.txt
 CMakeLists.txt.user
 *.yml~
 .vscode/
+/.vs
