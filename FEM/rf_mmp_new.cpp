@@ -6962,62 +6962,7 @@ double CMediumProperties::PorosityVolStrain2(long index, double val0, CFiniteEle
 		val = 1e-6; // lower limit of porostity
 	return val;
 }
-/*************************************************************************************
-FEMLib-Method:
-Task: Returns the new porosity which will be calculated using volumetric strain.
-Programing:
-07.2018 VK Implementation
-01.2019 VK Updated to add swelling strains
-last modification:
-*************************************************************************************/
-double CMediumProperties::PorosityVolStrain2(long index, double val0, CFiniteElementStd* assem) // TODO: VK
-{
-	double val = val0, vol_strain_temp = 0., strain_temp[3] = {0.}, strain_nodes[20] = {0.};
-	int idx_temp[3] = {0}, nnodes = assem->nnodes;
-	double group, sw_ini[20] = {0.};
-	// WW int idx_temp[3]={0}, ele_index, nnodes = assem->nnodes;
-	SolidProp::CSolidProperties* m_msp = NULL;
-	group = m_pcs->m_msh->ele_vector[number]->GetPatchIndex();
-	m_msp = msp_vector[group];
-	// WW CRFProcessDeformation *dm_pcs = (CRFProcessDeformation *) this;
-	int dim = m_pcs->m_msh->GetCoordinateFlag() / 10;
-	if (dim == 2)
-		if (assem->axisymmetry)
-			dim = 3;
-	idx_temp[0] = assem->dm_pcs->GetNodeValueIndex("STRAIN_XX");
-	idx_temp[1] = assem->dm_pcs->GetNodeValueIndex("STRAIN_YY");
-	idx_temp[2] = assem->dm_pcs->GetNodeValueIndex("STRAIN_ZZ");
-	// WW ele_index = index;
-	for (int j = 0; j < dim; j++)
-	{
-		for (int i = 0; i < nnodes; i++)
-			strain_nodes[i] = assem->dm_pcs->GetNodeValue(assem->dm_pcs->m_msh->ele_vector[index]->getNodeIndices()[i],
-			                                              idx_temp[j]);
-		strain_temp[j] = assem->interpolate(strain_nodes);
-	}
-	for (int j = 0; j < dim; j++)
-		vol_strain_temp += strain_temp[j];
-	val += m_msp->Biot_Coefficient() * (vol_strain_temp); // VK: added 01.2019
-	if (m_msp->SwellingPressureType > 0)
-	{
-		int idx_p1_ini = assem->pcs->GetNodeValueIndex("PRESSURE1_Ini");
-		if (assem->pcs->Neglect_H_ini == 2)
-			for (int i = 0; i < nnodes; i++)
-			{
-				double p_init
-				    = assem->pcs->GetNodeValue(assem->pcs->m_msh->ele_vector[index]->getNodeIndices()[i], idx_p1_ini);
-				sw_ini[i] = Fem_Ele_Std->MediaProp->SaturationCapillaryPressureFunction(-p_init);
-			}
-		double sw_init = assem->interpolate(sw_ini);
-		double PG = Fem_Ele_Std->interpolate(Fem_Ele_Std->NodalVal1); // Capillary pressure
-		double Sw = Fem_Ele_Std->MediaProp->SaturationCapillaryPressureFunction(-PG);
-		m_msp->Calculate_Lame_Constant();
-		val -= m_msp->Max_SwellingPressure * (Sw - sw_init) / (3 * (m_msp->K));
-	}
-	if (val < MKleinsteZahl)
-		val = 1e-6; // lower limit of porostity
-	return val;
-}
+
 /**************************************************************************
    FEMLib-Method: TortuosityFunction
    Task:
