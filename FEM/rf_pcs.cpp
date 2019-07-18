@@ -10616,6 +10616,9 @@ void CRFProcess::CalcSecondaryVariablesUnsaturatedFlow(bool initial)
 	long i;
 	double p_cap;
 	int idxp, idxcp, idxS;
+	CMediumProperties* MediaProp = NULL; // VK adding to call porosity and permeability update functions
+	const size_t node_vector_size = m_msh->nod_vector.size();
+	const size_t mesh_ele_vector_size(m_msh->ele_vector.size());
 	//----------------------------------------------
 	vector<string> secondSNames;
 	vector<string> secondCPNames;

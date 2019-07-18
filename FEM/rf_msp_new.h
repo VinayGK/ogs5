@@ -93,6 +93,7 @@ public:
 	int GetConductModel() const { return Conductivity_mode; }
 	double Thermal_Expansion() const { return ThermalExpansion; }
 	double Poisson_Ratio() const { return PoissonRatio; }
+	double Biot_Coefficient() const { return biot_const; } //VK: implemented 01.2019
 	// Elasticity
 	void Calculate_Lame_Constant();
 
@@ -183,6 +184,8 @@ private:
 	double biot_const;
 	int bishop_model; // 05.2011 WX
 	double bishop_model_value; // 05.2011 WX
+	//double bishop_s_res;
+	//double bishop_s_max;
 	double threshold_dev_str; // 12.2012 WX
 	double grav_const; // WW
 	int grav_curve_id; // NB
@@ -214,6 +217,7 @@ private:
 	// Swelling pressure
 	int SwellingPressureType;
 	double Max_SwellingPressure;
+	double SwellingLawExponent; //VK: 2018 added for non linear swelling
 	//
 	std::string CurveVariable_Conductivity;
 	int CurveVariableType_Conductivity;

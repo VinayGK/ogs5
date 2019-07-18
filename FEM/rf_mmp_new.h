@@ -111,6 +111,7 @@ public:
 	double PermeabilityFunctionEffStress(long index, int nnodes, CFiniteElementStd* h_fem); // AS:08.2012
 	double StorageFunctionEffStress(long index, int nnodes, CFiniteElementStd* h_fem); // AS 08.2012
 	double PorosityVolStrain(long index, double val0, CFiniteElementStd* assem); // WX: 03.2011
+	double PorosityVolStrain2(long index, double val0, CFiniteElementStd* assem); // VK: 16.07.2018
 	double KozenyCarman(double k0 /*old permeability*/,
 	                    double n0 /*old porosity*/,
 	                    double n /*new porosity*/); // HS: 11.2008
@@ -120,6 +121,7 @@ public:
 	// WW
 	double KozenyCarmanNew(double k_init, double n_init, double n_t); // AB
 	double VermaPruess(double k_init, double n_init, double n_t); // AB
+	
 	void CalStressPermeabilityFactor(double* kfac, const double T = 273.0);
 	// WW
 	void CalStressPermeabilityFactor2(double* kfac, const double T = 273.0);

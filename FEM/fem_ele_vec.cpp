@@ -927,11 +927,11 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt, const Matrix* p_D)
 							dN_dx += shapefctHQ[k] / Radius;
 
 						f_buff = fac * dN_dx * shapefct[l];
-						(*PressureC)(nnodesHQ* j + k, l) += f_buff;
+						(*PressureC)(nnodesHQ * j + k, l) += f_buff;
 						if (PressureC_S)
-							(*PressureC_S)(nnodesHQ* j + k, l) += f_buff * fac1;
+							(*PressureC_S)(nnodesHQ * j + k, l) += f_buff * fac1;
 						if (PressureC_S_dp)
-							(*PressureC_S_dp)(nnodesHQ* j + k, l) += f_buff * fac2;
+							(*PressureC_S_dp)(nnodesHQ * j + k, l) += f_buff * fac2;
 					}
 			}
 		}
@@ -943,11 +943,11 @@ void CFiniteElementVec::ComputeMatrix_RHS(const double fkt, const Matrix* p_D)
 					for (j = 0; j < ele_dim; j++)
 					{
 						f_buff = fac * dshapefctHQ[nnodesHQ * j + k] * shapefct[l];
-						(*PressureC)(nnodesHQ* j + k, l) += f_buff;
+						(*PressureC)(nnodesHQ * j + k, l) += f_buff;
 						if (PressureC_S)
-							(*PressureC_S)(nnodesHQ* j + k, l) += f_buff * fac1;
+							(*PressureC_S)(nnodesHQ * j + k, l) += f_buff * fac1;
 						if (PressureC_S_dp)
-							(*PressureC_S_dp)(nnodesHQ* j + k, l) += f_buff * fac2;
+							(*PressureC_S_dp)(nnodesHQ * j + k, l) += f_buff * fac2;
 					}
 			}
 		}
@@ -1064,13 +1064,13 @@ void CFiniteElementVec::LocalAssembly(const int update)
 			for (j = 0; j < nnodesHQ; j++)
 			{
 				// Increment of acceleration, da
-				(*dAcceleration)(i* nnodesHQ + j) = pcs->GetNodeValue(nodes[j], Idx_dm0[i]);
+				(*dAcceleration)(i * nnodesHQ + j) = pcs->GetNodeValue(nodes[j], Idx_dm0[i]);
 				// Increment of displacement
 				// du = v_n*dt+0.5*a_n*dt*dt+0.5*beta2*da*dt*dt
 				// a_n = a_{n+1}-da
 				Disp[j + i * nnodesHQ]
 				    = pcs->GetNodeValue(nodes[j], Idx_Vel[i]) * dt
-				      + 0.5 * dt * dt * (a_n[nodes[j] + NodeShift[i]] + beta2 * (*dAcceleration)(i* nnodesHQ + j));
+				      + 0.5 * dt * dt * (a_n[nodes[j] + NodeShift[i]] + beta2 * (*dAcceleration)(i * nnodesHQ + j));
 			}
 	}
 	else
@@ -1079,8 +1079,8 @@ void CFiniteElementVec::LocalAssembly(const int update)
 				// WX:03.2013 use total disp. if damage or E=f(t) is on, dstress in LocalAssembly_continumm() is also
 				// changed
 				if (smat->Time_Dependent_E_nv_mode > MKleinsteZahl && pcs->ExcavMaterialGroup < 0)
-					Disp[j + i * nnodesHQ] = pcs->GetNodeValue(nodes[j], Idx_dm0[i])
-					                         + pcs->GetNodeValue(nodes[j], Idx_dm0[i] + 1);
+					Disp[j + i * nnodesHQ]
+					    = pcs->GetNodeValue(nodes[j], Idx_dm0[i]) + pcs->GetNodeValue(nodes[j], Idx_dm0[i] + 1);
 				else
 					Disp[j + i * nnodesHQ] = pcs->GetNodeValue(nodes[j], Idx_dm0[i]);
 
@@ -1554,9 +1554,7 @@ void CFiniteElementVec::GlobalAssembly_Stiffness()
     07.2011. WW
  */
 #if defined(USE_PETSC) // || defined(other parallel libs)//10.3012. WW
-void CFiniteElementVec::GlobalAssembly_PressureCoupling(Matrix*, double, const int)
-{
-}
+void CFiniteElementVec::GlobalAssembly_PressureCoupling(Matrix*, double, const int) {}
 #else
 void CFiniteElementVec::GlobalAssembly_PressureCoupling(Matrix* pCMatrix, double fct, const int phase)
 {
@@ -1578,10 +1576,10 @@ void CFiniteElementVec::GlobalAssembly_PressureCoupling(Matrix* pCMatrix, double
 			{
 #ifdef NEW_EQS
 				(*A)(NodeShift[k] + eqs_number[i], NodeShift[dim_shift] + eqs_number[j])
-				    += fct * (*pCMatrix)(nnodesHQ* k + i, j);
+				    += fct * (*pCMatrix)(nnodesHQ * k + i, j);
 #else
 				MXInc(NodeShift[k] + eqs_number[i], NodeShift[dim_shift] + eqs_number[j],
-				      fct * (*pCMatrix)(nnodesHQ* k + i, j));
+				      fct * (*pCMatrix)(nnodesHQ * k + i, j));
 #endif
 			}
 		}
@@ -1735,6 +1733,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 		switch (Flow_Type)
 		{
 			case 0: // Liquid flow
+			{
 				// For monolithic scheme and liquid flow, the limit of positive pressure must be removed
 				if (pcs->Neglect_H_ini == 2) // WX
 					idx_p1_ini = h_pcs->GetNodeValueIndex("PRESSURE1_Ini");
@@ -1752,16 +1751,20 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					AuxNodal[i] = LoadFactor * val_n;
 				}
 				break;
+			}
 			case 10: // Ground_flow. Will be merged to case 0
+			{
 				// WW dent_w =  m_mfp->Density();
 				for (i = 0; i < nnodes; i++)
 					AuxNodal[i] = LoadFactor * h_pcs->GetNodeValue(nodes[i], idx_P1);
 				break;
+			}
 			case 1: // Richards flow
 			{
 				// WX:08.2011
 				double bishop_coef_ini = 0.0;
 				double S_e, S_e_ini = 0.0, sw_ini;
+				double chi;
 
 				if (pcs->Neglect_H_ini == 2)
 				{
@@ -1840,8 +1843,8 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					}
 					break;
 				}
-				case 2:
-				{ // Multi-phase-flow: p_g-Sw*p_c
+				case 2: // Multi-phase-flow: p_g-Sw*p_c
+				{
 					// 07.2011. WW
 					const int dim_times_nnodesHQ(dim * nnodesHQ);
 					for (i = 0; i < dim_times_nnodesHQ; i++)
@@ -1988,7 +1991,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				for (j = 0; j < nnodesHQ; j++)
 					for (k = 0; k < nnodesHQ; k++)
 						(*RHS)[i * nnodesHQ + j]
-						    += (*Mass)(j, k) * ((*dAcceleration)(i* nnodesHQ + k) + a_n[nodes[k] + NodeShift[i]]);
+						    += (*Mass)(j, k) * ((*dAcceleration)(i * nnodesHQ + k) + a_n[nodes[k] + NodeShift[i]]);
 
 // RHS->Write();
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//06.2013. WW
@@ -2463,8 +2466,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				// Pass as 6D vectors, i.e. set stress and strain [4] and [5] to zero for 2D and AXI as well as
 				// strain[3] to zero for 2D (plane strain)
 				double local_res;
-				smat->LocalNewtonBurgers(dt, strain_curr, stress_curr, eps_K_curr, eps_M_curr, ConsD, t1,
-										 local_res);
+				smat->LocalNewtonBurgers(dt, strain_curr, stress_curr, eps_K_curr, eps_M_curr, ConsD, t1, local_res);
 
 				// Then update (and reduce for 2D) stress increment vector and reduce (for 2D) ConsistDep, update
 				// internal variables
@@ -2513,7 +2515,8 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 
 				double e_pl_v = (*eleV_DM->e_pl)(gp);
 				double e_pl_eff = (*eleV_DM->pStrain)(gp);
-				double lam = (*eleV_DM->lambda_pl)(gp);//NOTE: May set starting value to zero in case of trouble with load reversals
+				double lam = (*eleV_DM->lambda_pl)(
+				    gp); // NOTE: May set starting value to zero in case of trouble with load reversals
 
 				// 6x6 tangent
 				Matrix ConsD(6, 6);
@@ -2522,7 +2525,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				// strain[3] to zero for 2D (plane strain)
 				double local_res(0.);
 				smat->LocalNewtonMinkley(dt, strain_curr, stress_curr, eps_K_curr, eps_M_curr, eps_pl_curr, e_pl_v,
-										 e_pl_eff, lam, ConsD, t1, local_res);
+				                         e_pl_eff, lam, ConsD, t1, local_res);
 
 				// Then update (and reduce for 2D) stress increment vector and reduce (for 2D) ConsistDep, update
 				// internal variables
@@ -2550,7 +2553,6 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				}
 			}
 
-
 			// Fluid coupling;
 			S_Water = 1.0;
 			if (Flow_Type > 0 && Flow_Type != 10)
@@ -2569,6 +2571,13 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				dS += S_Water;
 				for (i = 0; i < 3; i++)
 					dstress[i] -= dS * smat->Max_SwellingPressure;
+			}
+			else if (smat->SwellingPressureType == 5) // VK: 07.2018 non linear swelling model
+			{
+				dS = -interpolate(AuxNodal_S0, 1);
+				dS += S_Water;
+				for (i = 0; i < 3; i++)
+					dstress[i] -= pow(dS, smat->SwellingLawExponent) * smat->Max_SwellingPressure;
 			}
 			/*
 			   else if(smat->SwellingPressureType==3||smat->SwellingPressureType==4) // TEP model
@@ -3727,7 +3736,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 
 					for (size_t k = 0; k < ele_dim; k++)
 						for (size_t l = 0; l < ele_dim; l++)
-							(*BDG)(k, ele_dim* i + l) += fkt * (*AuxMatrix)(k, l);
+							(*BDG)(k, ele_dim * i + l) += fkt * (*AuxMatrix)(k, l);
 					//
 					// P*D*B
 					setB_Matrix(i);
@@ -3735,7 +3744,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					PeDe->multi(*B_matrix, *AuxMatrix);
 					for (size_t k = 0; k < ele_dim; k++)
 						for (size_t l = 0; l < ele_dim; l++)
-							(*PDB)(ele_dim* i + k, l) += fkt * (*AuxMatrix)(k, l) / area;
+							(*PDB)(ele_dim * i + k, l) += fkt * (*AuxMatrix)(k, l) / area;
 				}
 			}
 		} // End of RHS assembly
@@ -3757,7 +3766,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 						f_j = 0.0;
 						for (size_t ii = 0; ii < ele_dim; ii++)
 							for (size_t jj = 0; jj < ele_dim; jj++)
-								f_j += (*BDG)(k, ele_dim* i + ii) * (*DtD)(ii, jj) * (*PDB)(ele_dim* j + jj, l);
+								f_j += (*BDG)(k, ele_dim * i + ii) * (*DtD)(ii, jj) * (*PDB)(ele_dim * j + jj, l);
 						(*Stiffness)(i + k * nnodesHQ, l * nnodesHQ + j) -= f_j / Jac_e;
 					}
 			}
@@ -3873,10 +3882,10 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 		if (sdp->CreepModel() == 1001) // Burgers
 		{
 			Strain_Kel = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												  // cases (LengthBS) may follow later
+			                                      // cases (LengthBS) may follow later
 			*Strain_Kel = 0.0;
 			Strain_Max = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												  // cases (LengthBS) may follow later
+			                                      // cases (LengthBS) may follow later
 			*Strain_Max = 0.0;
 			Strain_t_ip = new Matrix(6, NGPoints);
 			*Strain_t_ip = 0.0;
@@ -3889,13 +3898,13 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 		if (sdp->CreepModel() == 1002) // Minkley
 		{
 			Strain_Kel = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												  // cases (LengthBS) may follow later
+			                                      // cases (LengthBS) may follow later
 			*Strain_Kel = 0.0;
 			Strain_Max = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												  // cases (LengthBS) may follow later
+			                                      // cases (LengthBS) may follow later
 			*Strain_Max = 0.0;
 			Strain_pl = new Matrix(6, NGPoints); // Only 3D size for now. Will work with all. Separation into special
-												 // cases (LengthBS) may follow later
+			                                     // cases (LengthBS) may follow later
 			*Strain_pl = 0.0;
 			Strain_t_ip = new Matrix(6, NGPoints);
 			*Strain_t_ip = 0.0;
