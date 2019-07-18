@@ -184,6 +184,8 @@ private:
 	double biot_const;
 	int bishop_model; // 05.2011 WX
 	double bishop_model_value; // 05.2011 WX
+	//double bishop_s_res;
+	//double bishop_s_max;
 	double threshold_dev_str; // 12.2012 WX
 	double grav_const; // WW
 	int grav_curve_id; // NB
