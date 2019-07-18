@@ -2587,8 +2587,8 @@ double CMediumProperties::HeatCapacity(long number, double theta, CFiniteElement
 				heat_capacity_fluids = 0.0;
 				porosity = 0.0;
 			}
-			heat_capacity = porosity * heat_capacity_fluids
-			                + (1.0 - porosity) * specific_heat_capacity_solid * density_solid;
+			heat_capacity
+			    = porosity * heat_capacity_fluids + (1.0 - porosity) * specific_heat_capacity_solid * density_solid;
 			break;
 		case 2: // boiling model for YD
 			// YD/OK: n c rho = n S^g c^g rho^g + n S^l c^l rho^l + (1-n) c^s rho^s
@@ -2853,14 +2853,14 @@ double* CMediumProperties::HeatDispersionTensorNew(int ip)
 	alpha_t = heat_dispersion_transverse;
 
 	if (abs(vg) > MKleinsteZahl // For the case of diffusive transport only
-	    // WW
+	                            // WW
 	    && (alpha_l > MKleinsteZahl || alpha_t > MKleinsteZahl))
 	{
 		switch (Dim)
 		{
 			case 1: // line elements
-				heat_dispersion_tensor[0] = heat_conductivity_porous_medium[0]
-				                            + alpha_l * heat_capacity_fluids * fluid_density * vg;
+				heat_dispersion_tensor[0]
+				    = heat_conductivity_porous_medium[0] + alpha_l * heat_capacity_fluids * fluid_density * vg;
 				break;
 			case 2:
 				D[0] = (alpha_t * vg) + (alpha_l - alpha_t) * (velocity[0] * velocity[0]) / vg;
@@ -2868,8 +2868,8 @@ double* CMediumProperties::HeatDispersionTensorNew(int ip)
 				D[2] = ((alpha_l - alpha_t) * (velocity[1] * velocity[0])) / vg;
 				D[3] = (alpha_t * vg) + (alpha_l - alpha_t) * (velocity[1] * velocity[1]) / vg;
 				for (i = 0; i < 4; i++)
-					heat_dispersion_tensor[i] = heat_conductivity_porous_medium[i]
-					                            + (D[i] * heat_capacity_fluids * fluid_density);
+					heat_dispersion_tensor[i]
+					    = heat_conductivity_porous_medium[i] + (D[i] * heat_capacity_fluids * fluid_density);
 				break;
 			case 3:
 				D[0] = (alpha_t * vg) + (alpha_l - alpha_t) * (velocity[0] * velocity[0]) / vg;
@@ -2882,8 +2882,8 @@ double* CMediumProperties::HeatDispersionTensorNew(int ip)
 				D[7] = ((alpha_l - alpha_t) * (velocity[2] * velocity[1])) / vg;
 				D[8] = (alpha_t * vg) + (alpha_l - alpha_t) * (velocity[2] * velocity[2]) / vg;
 				for (i = 0; i < 9; i++)
-					heat_dispersion_tensor[i] = heat_conductivity_porous_medium[i]
-					                            + (D[i] * heat_capacity_fluids * fluid_density);
+					heat_dispersion_tensor[i]
+					    = heat_conductivity_porous_medium[i] + (D[i] * heat_capacity_fluids * fluid_density);
 				break;
 		}
 	}
@@ -2932,8 +2932,8 @@ double* CMediumProperties::MassDispersionTensorNew(int ip, int tr_phase) // SB +
 	Daq = m_cp->CalcDiffusionCoefficientCP(index, theta, m_pcs);
 	molecular_diffusion_value = Daq * TortuosityFunction(index, g, theta);
 
-	molecular_diffusion_value = m_cp->CalcDiffusionCoefficientCP(index, theta, m_pcs)
-	                            * TortuosityFunction(index, g, theta);
+	molecular_diffusion_value
+	    = m_cp->CalcDiffusionCoefficientCP(index, theta, m_pcs) * TortuosityFunction(index, g, theta);
 
 	molecular_diffusion_value *= Porosity(index, theta);
 	// CB, SB
@@ -2954,7 +2954,7 @@ double* CMediumProperties::MassDispersionTensorNew(int ip, int tr_phase) // SB +
 		{
 			//--------------------------------------------------------------------
 			case 1: // line elements
-				; // Do nothing
+			    ; // Do nothing
 				break;
 			//--------------------------------------------------------------------
 			case 2:
@@ -6866,11 +6866,16 @@ double CMediumProperties::PorosityVolumetricChemicalReaction(long index)
 }
 
 // WX: 03.2011. Porosity = n0 + vol_strain
+// VK: 02.2019 Modified to consider strains from swelling pressure
 double CMediumProperties::PorosityVolStrain(long index, double val0, CFiniteElementStd* assem)
 {
 	double val = val0, vol_strain_temp = 0., strain_temp[3] = {0.}, strain_nodes[20] = {0.};
-	// WW int idx_temp[3]={0}, ele_index, nnodes = assem->nnodes;
 	int idx_temp[3] = {0}, nnodes = assem->nnodes;
+	double group, sw_ini[20] = {0.};
+	// WW int idx_temp[3]={0}, ele_index, nnodes = assem->nnodes;
+	SolidProp::CSolidProperties* m_msp = NULL;
+	group = m_pcs->m_msh->ele_vector[number]->GetPatchIndex();
+	m_msp = msp_vector[group];
 	// WW CRFProcessDeformation *dm_pcs = (CRFProcessDeformation *) this;
 	int dim = m_pcs->m_msh->GetCoordinateFlag() / 10;
 	if (dim == 2)
@@ -6957,7 +6962,62 @@ double CMediumProperties::PorosityVolStrain2(long index, double val0, CFiniteEle
 		val = 1e-6; // lower limit of porostity
 	return val;
 }
-
+/*************************************************************************************
+FEMLib-Method:
+Task: Returns the new porosity which will be calculated using volumetric strain.
+Programing:
+07.2018 VK Implementation
+01.2019 VK Updated to add swelling strains
+last modification:
+*************************************************************************************/
+double CMediumProperties::PorosityVolStrain2(long index, double val0, CFiniteElementStd* assem) // TODO: VK
+{
+	double val = val0, vol_strain_temp = 0., strain_temp[3] = {0.}, strain_nodes[20] = {0.};
+	int idx_temp[3] = {0}, nnodes = assem->nnodes;
+	double group, sw_ini[20] = {0.};
+	// WW int idx_temp[3]={0}, ele_index, nnodes = assem->nnodes;
+	SolidProp::CSolidProperties* m_msp = NULL;
+	group = m_pcs->m_msh->ele_vector[number]->GetPatchIndex();
+	m_msp = msp_vector[group];
+	// WW CRFProcessDeformation *dm_pcs = (CRFProcessDeformation *) this;
+	int dim = m_pcs->m_msh->GetCoordinateFlag() / 10;
+	if (dim == 2)
+		if (assem->axisymmetry)
+			dim = 3;
+	idx_temp[0] = assem->dm_pcs->GetNodeValueIndex("STRAIN_XX");
+	idx_temp[1] = assem->dm_pcs->GetNodeValueIndex("STRAIN_YY");
+	idx_temp[2] = assem->dm_pcs->GetNodeValueIndex("STRAIN_ZZ");
+	// WW ele_index = index;
+	for (int j = 0; j < dim; j++)
+	{
+		for (int i = 0; i < nnodes; i++)
+			strain_nodes[i] = assem->dm_pcs->GetNodeValue(assem->dm_pcs->m_msh->ele_vector[index]->getNodeIndices()[i],
+			                                              idx_temp[j]);
+		strain_temp[j] = assem->interpolate(strain_nodes);
+	}
+	for (int j = 0; j < dim; j++)
+		vol_strain_temp += strain_temp[j];
+	val += m_msp->Biot_Coefficient() * (vol_strain_temp); // VK: added 01.2019
+	if (m_msp->SwellingPressureType > 0)
+	{
+		int idx_p1_ini = assem->pcs->GetNodeValueIndex("PRESSURE1_Ini");
+		if (assem->pcs->Neglect_H_ini == 2)
+			for (int i = 0; i < nnodes; i++)
+			{
+				double p_init
+				    = assem->pcs->GetNodeValue(assem->pcs->m_msh->ele_vector[index]->getNodeIndices()[i], idx_p1_ini);
+				sw_ini[i] = Fem_Ele_Std->MediaProp->SaturationCapillaryPressureFunction(-p_init);
+			}
+		double sw_init = assem->interpolate(sw_ini);
+		double PG = Fem_Ele_Std->interpolate(Fem_Ele_Std->NodalVal1); // Capillary pressure
+		double Sw = Fem_Ele_Std->MediaProp->SaturationCapillaryPressureFunction(-PG);
+		m_msp->Calculate_Lame_Constant();
+		val -= m_msp->Max_SwellingPressure * (Sw - sw_init) / (3 * (m_msp->K));
+	}
+	if (val < MKleinsteZahl)
+		val = 1e-6; // lower limit of porostity
+	return val;
+}
 /**************************************************************************
    FEMLib-Method: TortuosityFunction
    Task:

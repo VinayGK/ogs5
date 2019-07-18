@@ -1751,11 +1751,14 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					AuxNodal[i] = LoadFactor * val_n;
 				}
 				break;
+			}
 			case 10: // Ground_flow. Will be merged to case 0
+			{
 				// WW dent_w =  m_mfp->Density();
 				for (i = 0; i < nnodes; i++)
 					AuxNodal[i] = LoadFactor * h_pcs->GetNodeValue(nodes[i], idx_P1);
 				break;
+			}
 			case 1: // Richards flow
 			{
 				// WX:08.2011
@@ -1840,8 +1843,8 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 					}
 					break;
 				}
-				case 2:
-				{ // Multi-phase-flow: p_g-Sw*p_c
+				case 2: // Multi-phase-flow: p_g-Sw*p_c
+				{
 					// 07.2011. WW
 					const int dim_times_nnodesHQ(dim * nnodesHQ);
 					for (i = 0; i < dim_times_nnodesHQ; i++)
@@ -1988,7 +1991,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				for (j = 0; j < nnodesHQ; j++)
 					for (k = 0; k < nnodesHQ; k++)
 						(*RHS)[i * nnodesHQ + j]
-						    += (*Mass)(j, k) * ((*dAcceleration)(i* nnodesHQ + k) + a_n[nodes[k] + NodeShift[i]]);
+						    += (*Mass)(j, k) * ((*dAcceleration)(i * nnodesHQ + k) + a_n[nodes[k] + NodeShift[i]]);
 
 // RHS->Write();
 #if !defined(USE_PETSC) // && !defined(other parallel libs)//06.2013. WW
@@ -2522,7 +2525,7 @@ void CFiniteElementVec::GlobalAssembly_RHS()
 				// strain[3] to zero for 2D (plane strain)
 				double local_res(0.);
 				smat->LocalNewtonMinkley(dt, strain_curr, stress_curr, eps_K_curr, eps_M_curr, eps_pl_curr, e_pl_v,
-										 e_pl_eff, lam, ConsD, t1, local_res);
+				                         e_pl_eff, lam, ConsD, t1, local_res);
 
 				// Then update (and reduce for 2D) stress increment vector and reduce (for 2D) ConsistDep, update
 				// internal variables
