@@ -37,13 +37,13 @@
 //#include "rf_mmp_new.h"
 #include "pcs_dm.h"
 
+#include "PhysicalConstant.h"
 #include "StringTools.h"
 #include "files0.h" // GetLineFromFile1
 #include "tools.h" // GetLineFromFile
-#include "PhysicalConstant.h"
 
-#include "minkley.h"
 #include "burgers.h"
+#include "minkley.h"
 
 std::vector<SolidProp::CSolidProperties*> msp_vector;
 std::vector<std::string> msp_key_word_vector; // OK
@@ -251,12 +251,12 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 						in_sd >> (*data_Capacity)(i);
 					in_sd.clear();
 					break;
-				case 7: //Capacity depending on solid conversion (density-based average)
-					//0. Capacity at lower_density_limit (reactive system property)
-					//1. Capacity at upper_density_limit (reactive system property)
+				case 7: // Capacity depending on solid conversion (density-based average)
+					// 0. Capacity at lower_density_limit (reactive system property)
+					// 1. Capacity at upper_density_limit (reactive system property)
 					data_Capacity = new Matrix(3);
-					for(i=0; i<2; i++)
-						in_sd>> (*data_Capacity)(i);
+					for (i = 0; i < 2; i++)
+						in_sd >> (*data_Capacity)(i);
 					in_sd.clear();
 					break;
 			}
@@ -642,7 +642,8 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 
 				data_Creep = new Matrix(20);
 				in_sd.str(GetLineFromFile1(msp_file));
-				for (i = 0; i < 20; i++){
+				for (i = 0; i < 20; i++)
+				{
 					(*data_Creep)(i) = 0.;
 					in_sd >> (*data_Creep)(i);
 				}
@@ -686,6 +687,8 @@ std::ios::pos_type CSolidProperties::Read(std::ifstream* msp_file)
 					break;
 				case 2: // pow(Se, parameter)
 					in_sd >> bishop_model_value;
+					//in_sd >> bishop_s_res;
+					//in_sd >> bishop_s_max;
 					break;
 				case 3: // JM model 3:    if p<bishop_model_value -> bishop_parameter=0.0;  else -> bishop_parameter=1.0
 					in_sd >> bishop_model_value;
@@ -978,13 +981,16 @@ void CSolidProperties::SetSolidReactiveSystemProperties() // Definition auch in 
 {
 	if (reaction_system.compare("CaOH2") == 0)
 	{
-		lower_solid_density_limit = 1665.1; //density Calciumoxid
-		upper_solid_density_limit = 2200.0; //density Calciumhydroxid
-		reaction_enthalpy = -1.083e+05/PhysicalConstant::MolarMass::Water; //in J/kg (Molar heat of reaction divided by molar mass of water)
-		//negative for exothermic composition reaction
-		reaction_entropy = -143.5/PhysicalConstant::MolarMass::Water; //in J/kgK
+		lower_solid_density_limit = 1665.1; // density Calciumoxid
+		upper_solid_density_limit = 2200.0; // density Calciumhydroxid
+		reaction_enthalpy
+		    = -1.083e+05
+		      / PhysicalConstant::MolarMass::Water; // in J/kg (Molar heat of reaction divided by molar mass of water)
+		// negative for exothermic composition reaction
+		reaction_entropy = -143.5 / PhysicalConstant::MolarMass::Water; // in J/kgK
 		std::cout << "Set enthalpy correction reference temperature with keyword "
-		             "$ENTHALPY_CORRECTION_REFERENCE_TEMPERATURE; usually to initial solid temperature." << std::endl;
+		             "$ENTHALPY_CORRECTION_REFERENCE_TEMPERATURE; usually to initial solid temperature."
+		          << std::endl;
 	}
 	else if (reaction_system.compare("Mn3O4") == 0)
 	{
@@ -994,7 +1000,8 @@ void CSolidProperties::SetSolidReactiveSystemProperties() // Definition auch in 
 		// negative for exothermic composition reaction
 		reaction_entropy = -114.1 / 0.032; // in J/kgK
 		std::cout << "Set enthalpy correction reference temperature with keyword "
-		             "$ENTHALPY_CORRECTION_REFERENCE_TEMPERATURE; usuall to initial solid temperature." << std::endl;
+		             "$ENTHALPY_CORRECTION_REFERENCE_TEMPERATURE; usuall to initial solid temperature."
+		          << std::endl;
 	}
 	else if (reaction_system.compare("Z13XBF") == 0)
 	{
@@ -1040,7 +1047,7 @@ CSolidProperties::CSolidProperties()
 
 	SwellingPressureType = -1;
 	Max_SwellingPressure = 0.0;
-	SwellingLawExponent = 1.0; //VK: non lnear swelling law, 07.2018
+	SwellingLawExponent = 1.0; // VK: non lnear swelling law, 07.2018
 	// Default, elasticity
 	Plasticity_type = -1;
 
@@ -1349,12 +1356,12 @@ double CSolidProperties::Heat_Capacity(double refence)
 		}
 		break;
 		case 7:
-			//linear density average (compare model 5)
-			val = lower_solid_density_limit*(*data_Capacity)(0);
-			val += (upper_solid_density_limit*(*data_Capacity)(1)-lower_solid_density_limit*(*data_Capacity)(0))/
-				(upper_solid_density_limit  - lower_solid_density_limit)*(refence - lower_solid_density_limit);
+			// linear density average (compare model 5)
+			val = lower_solid_density_limit * (*data_Capacity)(0);
+			val += (upper_solid_density_limit * (*data_Capacity)(1) - lower_solid_density_limit * (*data_Capacity)(0))
+			       / (upper_solid_density_limit - lower_solid_density_limit) * (refence - lower_solid_density_limit);
 			val /= refence;
-		break;
+			break;
 		default:
 			val = (*data_Capacity)(0);
 			break;
@@ -1678,7 +1685,7 @@ double CSolidProperties::Kronecker(const int ii, const int jj)
    06/2014 TN Implementation
 **************************************************************************/
 void CSolidProperties::ExtractConsistentTangent(const Eigen::MatrixXd& Jac, const Eigen::MatrixXd& dGdE,
-												const bool pivoting, Eigen::Matrix<double, 6, 6>& dsigdE)
+                                                const bool pivoting, Eigen::Matrix<double, 6, 6>& dsigdE)
 {
 	const unsigned int local_dim(Jac.cols());
 	// Check Dimensions
@@ -1688,7 +1695,7 @@ void CSolidProperties::ExtractConsistentTangent(const Eigen::MatrixXd& Jac, cons
 	// solve linear system
 	if (pivoting)
 		dzdE = Jac.fullPivHouseholderQr().solve(-1.0 * dGdE); // Could consider moving to different Eigen solver.
-		//dzdE = Jac.fullPivLu().solve(-1.0 * dGdE); // Could consider moving to different Eigen solver.
+	// dzdE = Jac.fullPivLu().solve(-1.0 * dGdE); // Could consider moving to different Eigen solver.
 	else
 		dzdE = Jac.householderQr().solve(-1.0 * dGdE); // Could consider moving to different Eigen solver.
 	// in-built Gauss elimination solver was at least 4 OoM more inaccurate.
@@ -1705,9 +1712,9 @@ void CSolidProperties::ExtractConsistentTangent(const Eigen::MatrixXd& Jac, cons
    03/2015 NB Modified
 **************************************************************************/
 void CSolidProperties::LocalNewtonBurgers(const double dt, const std::vector<double>& strain_curr,
-										  std::vector<double>& stress_curr, std::vector<double>& strain_K_curr,
-										  std::vector<double>& strain_M_curr, Math_Group::Matrix& Consistent_Tangent,
-										  double Temperature, double& local_res)
+                                          std::vector<double>& stress_curr, std::vector<double>& strain_K_curr,
+                                          std::vector<double>& strain_M_curr, Math_Group::Matrix& Consistent_Tangent,
+                                          double Temperature, double& local_res)
 {
 	// stress, strain, internal variable
 	KVec sig_j, eps_K_j, eps_M_j;
@@ -1745,8 +1752,8 @@ void CSolidProperties::LocalNewtonBurgers(const double dt, const std::vector<dou
 	material_burgers->CalResidualBurgers(dt, epsd_i, sigd_j, eps_K_j, eps_K_t, eps_M_j, eps_M_t, res_loc);
 	// initial evaluation of Jacobian
 	material_burgers->CalJacobianBurgers(
-		dt, K_loc, sig_eff, sigd_j,
-		eps_K_j); // Note - With constant properties a single evaluation would be sufficient.
+	    dt, K_loc, sig_eff, sigd_j,
+	    eps_K_j); // Note - With constant properties a single evaluation would be sufficient.
 
 	// Loop variables
 	int counter = 0;
@@ -1802,12 +1809,12 @@ void CSolidProperties::LocalNewtonBurgers(const double dt, const std::vector<dou
 		for (size_t j = 0; j < 3; j++)
 		{
 			Consistent_Tangent(i, j) = dsigdE(i, j);
-			Consistent_Tangent(i, j + 3) = dsigdE(i, j + 3)
-										   / sqrt(2.); // from local to global shear components (Kelvin to Voigt)
-			Consistent_Tangent(i + 3, j) = dsigdE(i + 3, j)
-										   / sqrt(2.); // from local to global shear components (Kelvin to Voigt)
-			Consistent_Tangent(i + 3, j + 3) = dsigdE(i + 3, j + 3)
-											   / 2.; // from local to global shear components (Kelvin to Voigt)
+			Consistent_Tangent(i, j + 3)
+			    = dsigdE(i, j + 3) / sqrt(2.); // from local to global shear components (Kelvin to Voigt)
+			Consistent_Tangent(i + 3, j)
+			    = dsigdE(i + 3, j) / sqrt(2.); // from local to global shear components (Kelvin to Voigt)
+			Consistent_Tangent(i + 3, j + 3)
+			    = dsigdE(i + 3, j + 3) / 2.; // from local to global shear components (Kelvin to Voigt)
 		}
 	}
 }
@@ -1819,11 +1826,10 @@ void CSolidProperties::LocalNewtonBurgers(const double dt, const std::vector<dou
    06/2015 TN Implementation
 **************************************************************************/
 void CSolidProperties::LocalNewtonMinkley(const double dt, const std::vector<double>& strain_curr,
-										  std::vector<double>& stress_curr, std::vector<double>& eps_K_curr,
-										  std::vector<double>& eps_M_curr, std::vector<double>& eps_pl_curr,
-										  double& e_pl_v, double& e_pl_eff, double& lam,
-										  Math_Group::Matrix& Consistent_Tangent, double Temperature,
-										  double& local_res)
+                                          std::vector<double>& stress_curr, std::vector<double>& eps_K_curr,
+                                          std::vector<double>& eps_M_curr, std::vector<double>& eps_pl_curr,
+                                          double& e_pl_v, double& e_pl_eff, double& lam,
+                                          Math_Group::Matrix& Consistent_Tangent, double Temperature, double& local_res)
 {
 	// stress, strain, internal variable
 	KVec sig_j, eps_K_j, eps_M_j, eps_pl_j;
@@ -1863,7 +1869,7 @@ void CSolidProperties::LocalNewtonMinkley(const double dt, const std::vector<dou
 
 	// initial evaluation of residual and Jacobian
 	material_minkley->CalViscoelasticResidual(dt, epsd_i, e_i, e_pl_v, sig_j, eps_K_j, eps_K_t, eps_M_j, eps_M_t,
-											  eps_pl_j, res_loc);
+	                                          eps_pl_j, res_loc);
 	// initial evaluation of Jacobian
 	material_minkley->CalViscoelasticJacobian(dt, sig_j, sig_eff, K_loc);
 
@@ -1875,8 +1881,8 @@ void CSolidProperties::LocalNewtonMinkley(const double dt, const std::vector<dou
 	{
 		counter++;
 		// Solve linear system; Choice of solver can be influenced by material properties/property ratios
-		//inc_loc = K_loc.fullPivHouseholderQr().solve(-res_loc);
-		//others: fullPivLu() and colPivHouseholderQr()
+		// inc_loc = K_loc.fullPivHouseholderQr().solve(-res_loc);
+		// others: fullPivLu() and colPivHouseholderQr()
 		inc_loc = K_loc.fullPivLu().solve(-res_loc);
 		// increment solution vectors
 		sig_j += inc_loc.block<6, 1>(0, 0);
@@ -1887,7 +1893,7 @@ void CSolidProperties::LocalNewtonMinkley(const double dt, const std::vector<dou
 		material_minkley->UpdateMinkleyProperties(sig_eff, e_pl_eff, Temperature);
 		// evaluation of new residual
 		material_minkley->CalViscoelasticResidual(dt, epsd_i, e_i, e_pl_v, sig_j, eps_K_j, eps_K_t, eps_M_j, eps_M_t,
-												  eps_pl_j, res_loc);
+		                                          eps_pl_j, res_loc);
 		// Get Jacobian
 		material_minkley->CalViscoelasticJacobian(dt, sig_j, sig_eff, K_loc);
 	}
@@ -1896,14 +1902,14 @@ void CSolidProperties::LocalNewtonMinkley(const double dt, const std::vector<dou
 		Eigen::Matrix<double, 27, 1> res_loc_p, inc_loc_p;
 		Eigen::Matrix<double, 27, 27> K_loc_p;
 		material_minkley->CalViscoplasticResidual(dt, epsd_i, e_i, sig_j, eps_K_j, eps_K_t, eps_M_j, eps_M_t, eps_pl_j,
-												  eps_pl_t, e_pl_v, e_pl_v_t, e_pl_eff, e_pl_eff_t, lam, res_loc_p);
+		                                          eps_pl_t, e_pl_v, e_pl_v_t, e_pl_eff, e_pl_eff_t, lam, res_loc_p);
 		material_minkley->CalViscoplasticJacobian(dt, sig_j, sig_eff, lam, e_pl_eff, K_loc_p);
-		while (res_loc_p.norm() > Tolerance_Local_Newton && counter < 2*counter_max)
+		while (res_loc_p.norm() > Tolerance_Local_Newton && counter < 2 * counter_max)
 		{
 			counter++;
 			// Solve linear system; Choice of solver can be influenced by material properties/property ratios
 			inc_loc_p = K_loc_p.fullPivLu().solve(-res_loc_p);
-			//inc_loc_p = K_loc_p.householderQr().solve(-res_loc_p);
+			// inc_loc_p = K_loc_p.householderQr().solve(-res_loc_p);
 			// increment solution vectors
 			sig_j += inc_loc_p.block<6, 1>(0, 0);
 			eps_K_j += inc_loc_p.block<6, 1>(6, 0);
@@ -1917,8 +1923,8 @@ void CSolidProperties::LocalNewtonMinkley(const double dt, const std::vector<dou
 			material_minkley->UpdateMinkleyProperties(sig_eff, e_pl_eff, Temperature);
 			// evaluation of new residual
 			material_minkley->CalViscoplasticResidual(dt, epsd_i, e_i, sig_j, eps_K_j, eps_K_t, eps_M_j, eps_M_t,
-													  eps_pl_j, eps_pl_t, e_pl_v, e_pl_v_t, e_pl_eff, e_pl_eff_t, lam,
-													  res_loc_p);
+			                                          eps_pl_j, eps_pl_t, e_pl_v, e_pl_v_t, e_pl_eff, e_pl_eff_t, lam,
+			                                          res_loc_p);
 			// Get Jacobian
 			material_minkley->CalViscoplasticJacobian(dt, sig_j, sig_eff, lam, e_pl_eff, K_loc_p);
 		}
@@ -1944,7 +1950,7 @@ void CSolidProperties::LocalNewtonMinkley(const double dt, const std::vector<dou
 		// guaranteed."
 		//			          << std::endl;
 		//			          << std::endl;local_res = res_loc.norm();
-		local_res = -res_loc.norm(); //negative to imply that viscoelastic routine was used.
+		local_res = -res_loc.norm(); // negative to imply that viscoelastic routine was used.
 	}
 	// add hydrostatic part to stress and tangent
 	sig_j *= material_minkley->GM;
@@ -1959,12 +1965,12 @@ void CSolidProperties::LocalNewtonMinkley(const double dt, const std::vector<dou
 		for (size_t j = 0; j < 3; j++)
 		{
 			Consistent_Tangent(i, j) = dsigdE(i, j);
-			Consistent_Tangent(i, j + 3) = dsigdE(i, j + 3)
-										   / sqrt(2.); // from local to global shear components (Kelvin to Voigt)
-			Consistent_Tangent(i + 3, j) = dsigdE(i + 3, j)
-										   / sqrt(2.); // from local to global shear components (Kelvin to Voigt)
-			Consistent_Tangent(i + 3, j + 3) = dsigdE(i + 3, j + 3)
-											   / 2.; // from local to global shear components (Kelvin to Voigt)
+			Consistent_Tangent(i, j + 3)
+			    = dsigdE(i, j + 3) / sqrt(2.); // from local to global shear components (Kelvin to Voigt)
+			Consistent_Tangent(i + 3, j)
+			    = dsigdE(i + 3, j) / sqrt(2.); // from local to global shear components (Kelvin to Voigt)
+			Consistent_Tangent(i + 3, j + 3)
+			    = dsigdE(i + 3, j + 3) / 2.; // from local to global shear components (Kelvin to Voigt)
 		}
 	}
 }
@@ -3002,8 +3008,9 @@ int CSolidProperties::DirectStressIntegrationDPwithTension(const int GPiGPj, Mat
 			if (sqrtJ2 <= sqrtJ2I1)
 			{
 				if ((dstrs[0] + dstrs[1] + dstrs[2]) != 0.0)
-					mm = (3 * tension - ((*ele_val->Stress)(0, GPiGPj) + (*ele_val->Stress)(1, GPiGPj)
-					                     + (*ele_val->Stress)(2, GPiGPj)))
+					mm = (3 * tension
+					      - ((*ele_val->Stress)(0, GPiGPj) + (*ele_val->Stress)(1, GPiGPj)
+					         + (*ele_val->Stress)(2, GPiGPj)))
 					     / (dstrs[0] + dstrs[1] + dstrs[2]);
 				else
 					mm = 1.;
@@ -4321,7 +4328,7 @@ int CSolidProperties::DirectStressIntegrationMOHR(const int GPiGPj, ElementValue
 	   double tmpresult[6]={0.};
 	   TransMatrixA_T->multi(prin_str, tmpresult);
 	   for(i=0; i<Size; i++)
-		cout<<tmpresult[i]<<endl;
+	    cout<<tmpresult[i]<<endl;
 	 */ /////////
 
 	// if(m_pcs->GetIteSteps()==1)
@@ -6534,7 +6541,8 @@ void CSolidProperties::dG__dNStress_dNStress(const double* DevS,
 			delta_ij_kl = Kronecker(ii, jj) * Kronecker(kk, ll);
 			// dG_dSdS[i*LengthStrs+j] =
 			(*d2G_dSdS)(i, j)
-			    = 0.5 * ((Kronecker(ii, kk) * Kronecker(jj, ll) - delta_ij_kl / 3.0) / psi1
+			    = 0.5
+			          * ((Kronecker(ii, kk) * Kronecker(jj, ll) - delta_ij_kl / 3.0) / psi1
 			             + (MatN1[0] + 12.0 * MatN1[2] * MatN1[2] * I_p2) * delta_ij_kl)
 			          / PSI
 			      - 0.25 * (DevS[i] / psi1 + (MatN1[0] * In1 + 4.0 * MatN1[2] * MatN1[2] * I_p3) * Kronecker(ii, jj))
@@ -6794,7 +6802,8 @@ void CSolidProperties::dfun2(const double* DevS, const double* RotV, const doubl
 			    - 0.5 * var * (In1 * RotV[i] - mr * DevS[i])
 			          * (DevS[j] / psi1 + (MatN1[0] * In1 + 4.0 * MatN1[2] * MatN1[2] * I_p3) * Kronecker(kk, ll))
 			          / PSI_p3
-			    + var * (RotV[i] * Kronecker(kk, ll)
+			    + var
+			          * (RotV[i] * Kronecker(kk, ll)
 			             - mr * (Kronecker(ii, kk) * Kronecker(jj, ll) - Kronecker(ii, jj) * Kronecker(kk, ll) / 3.0))
 			          / PSI);
 
@@ -7088,7 +7097,7 @@ void CSolidProperties::CalStress_and_TangentialMatrix_CC(const int GPiGPj, const
 			K = q = q_tr / (1.0 + 6.0 * G * vep / M2);
 		}
 #else // ifdef New
-		// Associative flow rule
+      // Associative flow rule
 		while (isLoop) // Newton step for the plastic multiplier
 		{
 			NPStep++;
@@ -7845,16 +7854,18 @@ void CSolidProperties::AddStain_by_Creep(const int ns, double* stress_n, double*
 			break;
 		// TN: BGRb
 		case 3:
-			fac = 1.5 * dt * ((*data_Creep)(0) * exp(-(*data_Creep)(2) / (8.314472 * (temperature + 273.15)))
-			                      * pow(norn_S, (*data_Creep)(1))
-			                  + (*data_Creep)(3) * exp(-(*data_Creep)(5) / (8.314472 * (temperature + 273.15)))
-			                        * pow(norn_S, (*data_Creep)(4)));
+			fac = 1.5 * dt
+			      * ((*data_Creep)(0) * exp(-(*data_Creep)(2) / (8.314472 * (temperature + 273.15)))
+			             * pow(norn_S, (*data_Creep)(1))
+			         + (*data_Creep)(3) * exp(-(*data_Creep)(5) / (8.314472 * (temperature + 273.15)))
+			               * pow(norn_S, (*data_Creep)(4)));
 			break;
 		// TN: BGRsf
 		case 4:
-			fac = 1.5 * dt * ((*data_Creep)(0) * exp(-(*data_Creep)(2) / (8.314472 * (temperature + 273.15)))
-			                      * pow(norn_S, (*data_Creep)(1))
-			                  + (*data_Creep)(4) * pow(norn_S, 2));
+			fac = 1.5 * dt
+			      * ((*data_Creep)(0) * exp(-(*data_Creep)(2) / (8.314472 * (temperature + 273.15)))
+			             * pow(norn_S, (*data_Creep)(1))
+			         + (*data_Creep)(4) * pow(norn_S, 2));
 			break;
 	}
 	for (i = 0; i < ns; i++)
@@ -8193,7 +8204,7 @@ FiniteElement::SolidReactiveSystem CSolidProperties::getSolidReactiveSystem() co
 	return _reactive_system;
 }
 
-} // end namespace
+} // namespace SolidProp
 
 /////////////////////////////////////////////////////////////////////////////
 
